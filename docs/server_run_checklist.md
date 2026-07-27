@@ -395,3 +395,9 @@ logs/
 7. 再补 spectral_metrics
 8. 再扩展 Burgers baseline
 ```
+
+Burgers 和 shallow-water 的后续运行命令见：
+
+```text
+docs/stage0_burgers_shallow_water_run_guide.md
+```

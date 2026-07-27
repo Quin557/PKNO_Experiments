@@ -79,7 +79,7 @@ data_path = "./data/ns_V1e-3_N5000_T50.mat"
 服务器目标位置：
 
 ```text
-$DATA_ROOT/raw/navier_stokes/ns_V1e-3_N5000_T50.mat
+$DATA_ROOT/navier_stokes/ns_V1e-3_N5000_T50.mat
 ```
 
 ### 3.2 Navier-Stokes v1e-4
@@ -98,7 +98,7 @@ ns_V1e-4_N10000_T30.mat
 服务器目标位置：
 
 ```text
-$DATA_ROOT/raw/navier_stokes/ns_V1e-4_N10000_T30.mat
+$DATA_ROOT/navier_stokes/ns_V1e-4_N10000_T30.mat
 ```
 
 ### 3.3 Burgers
@@ -118,7 +118,7 @@ burgers_data_R10.mat
 服务器目标位置：
 
 ```text
-$DATA_ROOT/raw/burgers/burgers_data_R10.mat
+$DATA_ROOT/burgers/burgers_data_R10.mat
 ```
 
 ### 3.4 Shallow-water
@@ -126,19 +126,19 @@ $DATA_ROOT/raw/burgers/burgers_data_R10.mat
 第四优先级，暂缓：
 
 ```text
-shallow_water_data.mat
+2D_rdb_NA_NA.h5
 ```
 
 说明：
 
 - KoopmanLab 有 `kp.data.shallow_water(...)` 接口；
-- 但具体官方文件名和来源需要进一步确认；
+- 对应 PDEBench SWE / 2D radial dam break 数据；
 - 不作为第一轮 smoke test 的阻塞项。
 
-服务器目标位置暂定：
+服务器目标位置：
 
 ```text
-$DATA_ROOT/raw/shallow_water/shallow_water_data.mat
+$DATA_ROOT/shallow_water/2D_rdb_NA_NA.h5
 ```
 
 ## 4. 服务器目录结构
@@ -153,7 +153,7 @@ $DATA_ROOT/raw/shallow_water/shallow_water_data.mat
   burgers/
     burgers_data_R10.mat
   shallow_water/
-    shallow_water_data.mat
+    2D_rdb_NA_NA.h5
 ```
 
 其中 Navier-Stokes 是当前第一阶段必须优先准备的。
@@ -187,11 +187,11 @@ vim configs/data_paths.env
 DATA_ROOT=/path/to/pkno_data
 KOOPMANLAB_ROOT=external/KoopmanLab
 
-NS2D_V1E3_FILE=raw/navier_stokes/ns_V1e-3_N5000_T50.mat
-NS2D_V1E4_FILE=raw/navier_stokes/ns_V1e-4_N10000_T30.mat
+NS2D_V1E3_FILE=navier_stokes/ns_V1e-3_N5000_T50.mat
+NS2D_V1E4_FILE=navier_stokes/ns_V1e-4_N10000_T30.mat
 
-BURGERS_FILE=raw/burgers/burgers_data_R10.mat
-SHALLOW_WATER_FILE=raw/shallow_water/shallow_water_data.mat
+BURGERS_FILE=burgers/burgers_data_R10.mat
+SHALLOW_WATER_FILE=shallow_water/2D_rdb_NA_NA.h5
 ```
 
 注意：
@@ -275,7 +275,7 @@ PY
 只要先拿到下面这个文件，就可以启动第一阶段 smoke test：
 
 ```text
-$DATA_ROOT/raw/navier_stokes/ns_V1e-3_N5000_T50.mat
+$DATA_ROOT/navier_stokes/ns_V1e-3_N5000_T50.mat
 ```
 
 然后按照：

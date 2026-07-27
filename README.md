@@ -94,6 +94,10 @@ reports/
 
 [docs/stage0_data_download.md](docs/stage0_data_download.md)
 
+Burgers 与 shallow-water 后续运行指南见：
+
+[docs/stage0_burgers_shallow_water_run_guide.md](docs/stage0_burgers_shallow_water_run_guide.md)
+
 总体任务顺序和研究思路见：
 
 [docs/task_order_and_research_logic.md](docs/task_order_and_research_logic.md)

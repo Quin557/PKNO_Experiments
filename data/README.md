@@ -11,6 +11,8 @@ data/
     ns_V1e-4_N10000_T30.mat
   burgers/
     burgers_data_R10.mat
+  shallow_water/
+    2D_rdb_NA_NA.h5
 ```
 
 注意：

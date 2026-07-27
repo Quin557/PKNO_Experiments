@@ -32,6 +32,9 @@ data/**
 !data/burgers/
 !data/burgers/README.md
 !data/burgers/.gitkeep
+!data/shallow_water/
+!data/shallow_water/README.md
+!data/shallow_water/.gitkeep
 outputs/*
 !outputs/.gitkeep
 checkpoints/

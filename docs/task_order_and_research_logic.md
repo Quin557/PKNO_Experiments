@@ -73,6 +73,7 @@ logs/<run_name>.log
 ```text
 docs/server_run_checklist.md
 docs/output_layout.md
+docs/stage0_burgers_shallow_water_run_guide.md
 ```
 
 ### 2. 指标与诊断补齐
