@@ -112,6 +112,12 @@ ls -lh "$DATA_ROOT/$NS2D_V1E4_FILE"
 
 如果某个文件暂时没有，就先只跑已有文件。
 
+更详细的数据下载与放置说明见：
+
+```text
+docs/stage0_data_download.md
+```
+
 ## 5. 准备阶段目录
 
 ```bash

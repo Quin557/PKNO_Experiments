@@ -90,6 +90,10 @@ reports/
 
 [docs/output_layout.md](docs/output_layout.md)
 
+第一阶段数据下载与放置说明见：
+
+[docs/stage0_data_download.md](docs/stage0_data_download.md)
+
 总体任务顺序和研究思路见：
 
 [docs/task_order_and_research_logic.md](docs/task_order_and_research_logic.md)
@@ -153,6 +157,10 @@ See the server guide:
 See the server output layout:
 
 [docs/output_layout.md](docs/output_layout.md)
+
+See Stage 0 data download and placement:
+
+[docs/stage0_data_download.md](docs/stage0_data_download.md)
 
 See the overall task order and research logic:
 

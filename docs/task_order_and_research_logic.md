@@ -176,6 +176,7 @@ docs/project_brief.md
 
 ```text
 docs/data_inventory.md
+docs/stage0_data_download.md
 ref/data_cards/
 ```
 
