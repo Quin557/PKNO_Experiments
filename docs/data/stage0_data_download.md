@@ -281,7 +281,7 @@ $DATA_ROOT/navier_stokes/ns_V1e-3_N5000_T50.mat
 然后按照：
 
 ```text
-docs/server_run_checklist.md
+docs/server/server_run_checklist.md
 ```
 
 运行：

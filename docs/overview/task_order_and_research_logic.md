@@ -36,8 +36,8 @@
 主要位置：
 
 - `README.md`
-- `docs/project_brief.md`
-- `docs/data_inventory.md`
+- `docs/overview/project_brief.md`
+- `docs/data/data_inventory.md`
 - `ref/`
 
 ### 1. KNO 官方 baseline
@@ -71,9 +71,9 @@ logs/<run_name>.log
 详细操作见：
 
 ```text
-docs/server_run_checklist.md
-docs/output_layout.md
-docs/stage0_burgers_shallow_water_run_guide.md
+docs/server/server_run_checklist.md
+docs/experiments/output_layout.md
+docs/baselines/stage0_burgers_shallow_water_run_guide.md
 ```
 
 ### 2. 指标与诊断补齐
@@ -143,7 +143,7 @@ K_k = G(e(k), u_embed, c)
 ```text
 external/pknn_reference
 ref/code_notes/pknn_reference_code_map.md
-docs/pytorch_porting_notes_pknn.md
+docs/models/pytorch_porting_notes_pknn.md
 ```
 
 ### 6. PKNO 最终融合
@@ -169,29 +169,29 @@ u_final = u_pred + optional_high_frequency_residual
 总体路线：
 
 ```text
-docs/task_order_and_research_logic.md
-docs/project_brief.md
+docs/overview/task_order_and_research_logic.md
+docs/overview/project_brief.md
 ```
 
 数据清单：
 
 ```text
-docs/data_inventory.md
-docs/stage0_data_download.md
+docs/data/data_inventory.md
+docs/data/stage0_data_download.md
 ref/data_cards/
 ```
 
 第一阶段服务器操作：
 
 ```text
-docs/server_run_checklist.md
-docs/output_layout.md
+docs/server/server_run_checklist.md
+docs/experiments/output_layout.md
 ```
 
 实验记录规范：
 
 ```text
-docs/experiment_protocol.md
+docs/experiments/experiment_protocol.md
 ```
 
 指标说明：

@@ -15,7 +15,7 @@ REPORT_DIR="reports/$STAGE"
 完整目录规范见：
 
 ```text
-docs/output_layout.md
+docs/experiments/output_layout.md
 ```
 
 ## 1. 克隆仓库
@@ -115,7 +115,7 @@ ls -lh "$DATA_ROOT/$NS2D_V1E4_FILE"
 更详细的数据下载与放置说明见：
 
 ```text
-docs/stage0_data_download.md
+docs/data/stage0_data_download.md
 ```
 
 ## 5. 准备阶段目录
@@ -399,5 +399,5 @@ logs/
 Burgers 和 shallow-water 的后续运行命令见：
 
 ```text
-docs/stage0_burgers_shallow_water_run_guide.md
+docs/baselines/stage0_burgers_shallow_water_run_guide.md
 ```

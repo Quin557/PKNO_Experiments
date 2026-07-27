@@ -34,6 +34,10 @@ Stage 5: 高维复杂系统长时间 rollout 展示
 3. KoopmanLab/KNO 论文中可获取的 shallow-water 等辅助数据。
 4. PDEBench 参数化数据：后续 Param-KNO / PKNO 阶段使用。
 
+文档入口与分类规则见：
+
+[docs/README.md](docs/README.md)
+
 仓库结构：
 
 ```text
@@ -43,12 +47,15 @@ configs/
   experiment/
 
 docs/
-  project_brief.md
-  data_inventory.md
-  experiment_protocol.md
-  model_design_decisions.md
-  pytorch_porting_notes_pknn.md
-  server_run_checklist.md
+  README.md
+  overview/
+  data/
+  baselines/
+  experiments/
+  metrics/
+  models/
+  server/
+  reports/
 
 ref/
   papers/
@@ -84,23 +91,23 @@ reports/
 
 服务器操作见：
 
-[docs/server_run_checklist.md](docs/server_run_checklist.md)
+[docs/server/server_run_checklist.md](docs/server/server_run_checklist.md)
 
 服务器输出目录规范见：
 
-[docs/output_layout.md](docs/output_layout.md)
+[docs/experiments/output_layout.md](docs/experiments/output_layout.md)
 
 第一阶段数据下载与放置说明见：
 
-[docs/stage0_data_download.md](docs/stage0_data_download.md)
+[docs/data/stage0_data_download.md](docs/data/stage0_data_download.md)
 
 Burgers 与 shallow-water 后续运行指南见：
 
-[docs/stage0_burgers_shallow_water_run_guide.md](docs/stage0_burgers_shallow_water_run_guide.md)
+[docs/baselines/stage0_burgers_shallow_water_run_guide.md](docs/baselines/stage0_burgers_shallow_water_run_guide.md)
 
 总体任务顺序和研究思路见：
 
-[docs/task_order_and_research_logic.md](docs/task_order_and_research_logic.md)
+[docs/overview/task_order_and_research_logic.md](docs/overview/task_order_and_research_logic.md)
 
 提交规则：
 
@@ -156,16 +163,16 @@ Clone KoopmanLab -> prepare official KNO data -> run smoke baseline -> record me
 
 See the server guide:
 
-[docs/server_run_checklist.md](docs/server_run_checklist.md)
+[docs/server/server_run_checklist.md](docs/server/server_run_checklist.md)
 
 See the server output layout:
 
-[docs/output_layout.md](docs/output_layout.md)
+[docs/experiments/output_layout.md](docs/experiments/output_layout.md)
 
 See Stage 0 data download and placement:
 
-[docs/stage0_data_download.md](docs/stage0_data_download.md)
+[docs/data/stage0_data_download.md](docs/data/stage0_data_download.md)
 
 See the overall task order and research logic:
 
-[docs/task_order_and_research_logic.md](docs/task_order_and_research_logic.md)
+[docs/overview/task_order_and_research_logic.md](docs/overview/task_order_and_research_logic.md)

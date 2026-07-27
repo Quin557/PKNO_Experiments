@@ -107,7 +107,7 @@ Stage 5: 高维复杂长时间 rollout 展示实验
 建议新项目里保留一个迁移说明：
 
 ```text
-docs/pytorch_porting_notes_pknn.md
+docs/models/pytorch_porting_notes_pknn.md
 ```
 
 内容包括：
@@ -504,11 +504,11 @@ ref/
 
 ```text
 README.md
-docs/project_brief.md
-docs/data_inventory.md
-docs/experiment_protocol.md
-docs/model_design_decisions.md
-docs/pytorch_porting_notes_pknn.md
+docs/overview/project_brief.md
+docs/data/data_inventory.md
+docs/experiments/experiment_protocol.md
+docs/models/model_design_decisions.md
+docs/models/pytorch_porting_notes_pknn.md
 configs/data_paths.example.env
 configs/model/kno_base.yaml
 configs/model/am_kno.yaml
@@ -664,7 +664,7 @@ step_rel_l2, full_rel_l2, high_band_spectral_error
 
 建议最终至少做一张复杂度-效果散点图。横轴是计算代价，纵轴是长期/高频误差，点大小是参数量，颜色表示模型家族。
 
-![Complexity tradeoff template](assets/complexity_tradeoff_template.png)
+![Complexity tradeoff template](../../reports/complexity_tradeoff_template.png)
 
 图的设计建议：
 

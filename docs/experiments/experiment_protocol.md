@@ -25,7 +25,7 @@ logs/<stage_name>/<run_name>.log
 阶段目录名称统一见：
 
 ```text
-docs/output_layout.md
+docs/experiments/output_layout.md
 ```
 
 如果 KoopmanLab 官方脚本不能直接写这些文件，应优先使用薄包装脚本或后处理脚本补齐记录，而不是直接改模型逻辑。
