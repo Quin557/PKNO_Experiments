@@ -1,0 +1,13 @@
+nohup: ignoring input
+dataset shape :  (50, 64, 64, 1200)
+Navier-Stokes (vis = 1e-3) Dataset has been loaded successfully!
+X train shape: torch.Size([1000, 64, 64, 10]) Y train shape: torch.Size([1000, 64, 64, 40])
+X test shape: torch.Size([200, 64, 64, 10]) Y test shape: torch.Size([200, 64, 64, 40])
+The autoencoder type is MLP.
+KNO2d model is completed.
+Koopman Model has been compiled!
+The Model Parameters Number is  526026
+Epoch Time [Train Recons MSE] [Train Pred MSE] [Eval Recons MSE] [Eval Pred MSE]
+0 64.25047235935926 0.03222621943056584 0.333391600549221 0.16107544675469398 0.13986455723643304
+Total prediction test mse error is  0.13986455723643304
+Total reconstruction test mse error is  0.01380665298551321
