@@ -12,6 +12,8 @@ from typing import Any
 import torch
 import yaml
 
+from koopmanlab_utils import koopmanlab_optional_output_flag
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Train official KoopmanLab KNO on Navier-Stokes")
@@ -81,7 +83,8 @@ def main() -> None:
     out_dir = args.output_dir / args.run_name
     fig_dir = out_dir / "figures"
     out_dir.mkdir(parents=True, exist_ok=True)
-    fig_dir.mkdir(parents=True, exist_ok=True)
+    if args.save_plots:
+        fig_dir.mkdir(parents=True, exist_ok=True)
 
     config = to_builtin(vars(args).copy())
     config["device_resolved"] = str(device)
@@ -115,8 +118,8 @@ def main() -> None:
         test_loader,
         T_out=args.t_out,
         path=str(fig_dir) + "/",
-        is_save=True,
-        is_plot=args.save_plots,
+        is_save=koopmanlab_optional_output_flag(args.save_plots),
+        is_plot=koopmanlab_optional_output_flag(args.save_plots),
     )
 
     with (out_dir / "rollout_error_by_step.csv").open("w", newline="") as f:

@@ -55,6 +55,7 @@ mlruns/
 reports/*.png
 reports/*.jpg
 reports/*.jpeg
+outputs/**/figures/
 
 # External source trees and large references
 external/*
