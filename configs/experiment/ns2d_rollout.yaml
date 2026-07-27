@@ -9,6 +9,10 @@ source_priority:
   - official_koopmanlab_demo
   - kno_paper_setting
   - official_kno_data
+paper_aligned_split:
+  ntrain: 1000
+  ntest: 200
+  note: "Use --ntrain 1000 --ntest 200 explicitly for v1e-4 to avoid KoopmanLab's larger default split."
 outputs:
   - metrics.csv
   - spectral_metrics.csv

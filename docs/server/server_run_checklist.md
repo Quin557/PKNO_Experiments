@@ -209,6 +209,14 @@ tail -n 5 outputs/stage0_kno_baseline/smoke_koopmanlab_ns_v1e3_gpu0/rollout_erro
 
 ### Smoke: NS v1e-4
 
+v1e-4 必须显式指定样本数：
+
+```text
+--ntrain 1000 --ntest 200
+```
+
+这样避免 KoopmanLab 默认 v1e-4 分支使用更多训练样本，并对齐 KNO 论文的 `1000/200` 设置。
+
 ```bash
 source configs/data_paths.env
 
@@ -230,6 +238,8 @@ nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --t-in 10 \
   --t-out 40 \
   --viscosity-type 1e-4 \
+  --ntrain 1000 \
+  --ntest 200 \
   --operator-size 32 \
   --modes 16 \
   --decompose 8 \
@@ -280,6 +290,12 @@ echo $!
 
 ### GPU 1: NS v1e-4 full
 
+v1e-4 full run 同样显式使用 KNO 论文样本数：
+
+```text
+--ntrain 1000 --ntest 200
+```
+
 ```bash
 source configs/data_paths.env
 
@@ -300,6 +316,8 @@ CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/official_kno/train_koopmanlab
   --t-in 10 \
   --t-out 40 \
   --viscosity-type 1e-4 \
+  --ntrain 1000 \
+  --ntest 200 \
   --operator-size 32 \
   --modes 16 \
   --decompose 8 \
