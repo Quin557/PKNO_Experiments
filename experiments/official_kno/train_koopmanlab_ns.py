@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import h5py
+import scipy.io
 import torch
 import yaml
 
@@ -28,6 +30,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--t-out", type=int, default=40)
     parser.add_argument("--viscosity-type", choices=["1e-3", "1e-4", "1e-5"], default="1e-3")
     parser.add_argument("--sub", type=int, default=1)
+    parser.add_argument("--ntrain", type=int, default=None)
+    parser.add_argument("--ntest", type=int, default=None)
     parser.add_argument("--operator-size", type=int, default=32)
     parser.add_argument("--modes", type=int, default=16)
     parser.add_argument("--decompose", type=int, default=8)
@@ -67,6 +71,60 @@ def write_env(path: Path) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def build_navier_stokes_loaders(args: argparse.Namespace, kp: Any):
+    if args.ntrain is None and args.ntest is None:
+        return kp.data.navier_stokes(
+            str(args.data_path),
+            batch_size=args.batch_size,
+            T_in=args.t_in,
+            T_out=args.t_out,
+            type=args.viscosity_type,
+            sub=args.sub,
+        )
+
+    if args.ntrain is None or args.ntest is None:
+        raise ValueError("--ntrain and --ntest must be provided together.")
+
+    total = args.ntrain + args.ntest
+    if args.viscosity_type in {"1e-3", "1e-4"}:
+        with h5py.File(args.data_path) as f:
+            data = f["u"][..., 0:total]
+        print("dataset shape:", data.shape)
+        data = torch.tensor(data, dtype=torch.float32)
+        data = data.permute(3, 1, 2, 0)
+    elif args.viscosity_type == "1e-5":
+        f = scipy.io.loadmat(args.data_path)
+        data = f["u"][..., 0:total]
+        print("dataset shape:", data.shape)
+        data = torch.tensor(data, dtype=torch.float32)
+    else:
+        raise ValueError(f"Unknown viscosity type: {args.viscosity_type}")
+
+    train_a = data[: args.ntrain, :: args.sub, :: args.sub, : args.t_in]
+    train_u = data[: args.ntrain, :: args.sub, :: args.sub, args.t_in : args.t_in + args.t_out]
+    test_a = data[-args.ntest :, :: args.sub, :: args.sub, : args.t_in]
+    test_u = data[-args.ntest :, :: args.sub, :: args.sub, args.t_in : args.t_in + args.t_out]
+
+    print(
+        f"Navier-Stokes (vis = {args.viscosity_type}) custom split loaded: "
+        f"ntrain={args.ntrain}, ntest={args.ntest}"
+    )
+    print("X train shape:", train_a.shape, "Y train shape:", train_u.shape)
+    print("X test shape:", test_a.shape, "Y test shape:", test_u.shape)
+
+    train_loader = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(train_a, train_u),
+        batch_size=args.batch_size,
+        shuffle=True,
+    )
+    test_loader = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(test_a, test_u),
+        batch_size=args.batch_size,
+        shuffle=False,
+    )
+    return train_loader, test_loader
+
+
 def main() -> None:
     args = parse_args()
     torch.manual_seed(args.seed)
@@ -92,14 +150,7 @@ def main() -> None:
     (out_dir / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=True), encoding="utf-8")
     write_env(out_dir / "env.txt")
 
-    train_loader, test_loader = kp.data.navier_stokes(
-        str(args.data_path),
-        batch_size=args.batch_size,
-        T_in=args.t_in,
-        T_out=args.t_out,
-        type=args.viscosity_type,
-        sub=args.sub,
-    )
+    train_loader, test_loader = build_navier_stokes_loaders(args, kp)
 
     model = kp.model.koopman(
         backbone="KNO2d",
