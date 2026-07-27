@@ -16,7 +16,9 @@ dist/
 *.egg-info/
 
 # Large experiment artifacts
-data/*
+data/**
+!data/
+!data/README.md
 !data/.gitkeep
 !data/raw/
 !data/raw/.gitkeep
@@ -24,6 +26,12 @@ data/*
 !data/processed/.gitkeep
 !data/index/
 !data/index/.gitkeep
+!data/navier_stokes/
+!data/navier_stokes/README.md
+!data/navier_stokes/.gitkeep
+!data/burgers/
+!data/burgers/README.md
+!data/burgers/.gitkeep
 outputs/*
 !outputs/.gitkeep
 checkpoints/

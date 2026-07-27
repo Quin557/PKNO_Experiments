@@ -79,7 +79,7 @@ data_path = "./data/ns_V1e-3_N5000_T50.mat"
 服务器目标位置：
 
 ```text
-$DATA_ROOT/navier_stokes/ns_V1e-3_N5000_T50.mat
+$DATA_ROOT/raw/navier_stokes/ns_V1e-3_N5000_T50.mat
 ```
 
 ### 3.2 Navier-Stokes v1e-4
@@ -98,7 +98,7 @@ ns_V1e-4_N10000_T30.mat
 服务器目标位置：
 
 ```text
-$DATA_ROOT/navier_stokes/ns_V1e-4_N10000_T30.mat
+$DATA_ROOT/raw/navier_stokes/ns_V1e-4_N10000_T30.mat
 ```
 
 ### 3.3 Burgers
@@ -118,7 +118,7 @@ burgers_data_R10.mat
 服务器目标位置：
 
 ```text
-$DATA_ROOT/burgers/burgers_data_R10.mat
+$DATA_ROOT/raw/burgers/burgers_data_R10.mat
 ```
 
 ### 3.4 Shallow-water
@@ -138,7 +138,7 @@ shallow_water_data.mat
 服务器目标位置暂定：
 
 ```text
-$DATA_ROOT/shallow_water/shallow_water_data.mat
+$DATA_ROOT/raw/shallow_water/shallow_water_data.mat
 ```
 
 ## 4. 服务器目录结构
@@ -158,6 +158,20 @@ $DATA_ROOT/shallow_water/shallow_water_data.mat
 
 其中 Navier-Stokes 是当前第一阶段必须优先准备的。
 
+仓库内也已经保留了对应目录模板：
+
+```text
+data/
+  navier_stokes/
+  burgers/
+```
+
+如果你希望直接把仓库内 `data/` 作为服务器数据根目录，可以设置：
+
+```bash
+DATA_ROOT=/absolute/path/to/PKNO_Experiments/data
+```
+
 ## 5. 配置 `configs/data_paths.env`
 
 在服务器仓库根目录执行：
@@ -173,11 +187,11 @@ vim configs/data_paths.env
 DATA_ROOT=/path/to/pkno_data
 KOOPMANLAB_ROOT=external/KoopmanLab
 
-NS2D_V1E3_FILE=navier_stokes/ns_V1e-3_N5000_T50.mat
-NS2D_V1E4_FILE=navier_stokes/ns_V1e-4_N10000_T30.mat
+NS2D_V1E3_FILE=raw/navier_stokes/ns_V1e-3_N5000_T50.mat
+NS2D_V1E4_FILE=raw/navier_stokes/ns_V1e-4_N10000_T30.mat
 
-BURGERS_FILE=burgers/burgers_data_R10.mat
-SHALLOW_WATER_FILE=shallow_water/shallow_water_data.mat
+BURGERS_FILE=raw/burgers/burgers_data_R10.mat
+SHALLOW_WATER_FILE=raw/shallow_water/shallow_water_data.mat
 ```
 
 注意：
@@ -261,7 +275,7 @@ PY
 只要先拿到下面这个文件，就可以启动第一阶段 smoke test：
 
 ```text
-$DATA_ROOT/navier_stokes/ns_V1e-3_N5000_T50.mat
+$DATA_ROOT/raw/navier_stokes/ns_V1e-3_N5000_T50.mat
 ```
 
 然后按照：
