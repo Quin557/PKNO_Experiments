@@ -86,6 +86,10 @@ reports/
 
 [docs/server_run_checklist.md](docs/server_run_checklist.md)
 
+服务器输出目录规范见：
+
+[docs/output_layout.md](docs/output_layout.md)
+
 总体任务顺序和研究思路见：
 
 [docs/task_order_and_research_logic.md](docs/task_order_and_research_logic.md)
@@ -145,6 +149,10 @@ Clone KoopmanLab -> prepare official KNO data -> run smoke baseline -> record me
 See the server guide:
 
 [docs/server_run_checklist.md](docs/server_run_checklist.md)
+
+See the server output layout:
+
+[docs/output_layout.md](docs/output_layout.md)
 
 See the overall task order and research logic:
 

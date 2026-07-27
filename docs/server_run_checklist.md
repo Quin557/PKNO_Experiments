@@ -2,13 +2,21 @@
 
 本指南用于当前第一阶段：**跑 KoopmanLab / KNO 官方 baseline**。
 
-当前原则：
+服务器输出必须按阶段分文件夹管理。第一阶段固定使用：
 
-- 优先使用 KoopmanLab 官方 API；
-- 不改 KNO 模型逻辑；
-- 用薄包装脚本补齐日志和结构化输出；
-- 训练使用 `nohup python -u ... > logs/<run>.log 2>&1 &`；
-- 每个 run 的结构化输出放在 `outputs/<run_name>/`。
+```bash
+STAGE=stage0_kno_baseline
+LOG_DIR="logs/$STAGE"
+OUT_DIR="outputs/$STAGE"
+RESULT_DIR="results/$STAGE"
+REPORT_DIR="reports/$STAGE"
+```
+
+完整目录规范见：
+
+```text
+docs/output_layout.md
+```
 
 ## 1. 克隆仓库
 
@@ -62,7 +70,7 @@ fi
 git -C external/KoopmanLab rev-parse HEAD
 ```
 
-本仓库的第一阶段入口会通过 `--koopmanlab-root external/KoopmanLab` 调用官方 API。
+第一阶段训练入口会通过 `--koopmanlab-root external/KoopmanLab` 调用官方 API。
 
 ## 4. 准备数据路径
 
@@ -104,28 +112,36 @@ ls -lh "$DATA_ROOT/$NS2D_V1E4_FILE"
 
 如果某个文件暂时没有，就先只跑已有文件。
 
-## 5. 目录准备
+## 5. 准备阶段目录
 
 ```bash
-mkdir -p logs outputs results reports
+source configs/data_paths.env
+
+STAGE=stage0_kno_baseline
+LOG_DIR="logs/$STAGE"
+OUT_DIR="outputs/$STAGE"
+RESULT_DIR="results/$STAGE"
+REPORT_DIR="reports/$STAGE"
+
+mkdir -p "$LOG_DIR" "$OUT_DIR" "$RESULT_DIR" "$REPORT_DIR"
 ```
 
-日志统一放：
+第一阶段日志统一放：
 
 ```text
-logs/<run_name>.log
+logs/stage0_kno_baseline/<run_name>.log
 ```
 
-结构化输出统一放：
+第一阶段结构化输出统一放：
 
 ```text
-outputs/<run_name>/
+outputs/stage0_kno_baseline/<run_name>/
 ```
 
 每个 run 预计输出：
 
 ```text
-outputs/<run_name>/
+outputs/stage0_kno_baseline/<run_name>/
   args.json
   config.yaml
   env.txt
@@ -137,23 +153,26 @@ outputs/<run_name>/
 
 ## 6. 单卡 Smoke Test
 
-先只用一张卡，例如物理 GPU 0：
-
-```bash
-source configs/data_paths.env
-export CUDA_VISIBLE_DEVICES=0
-mkdir -p logs outputs
-```
+先只用一张卡，例如物理 GPU 0。
 
 ### Smoke: NS v1e-3
 
 ```bash
+source configs/data_paths.env
+
+STAGE=stage0_kno_baseline
+LOG_DIR="logs/$STAGE"
+OUT_DIR="outputs/$STAGE"
+mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
+
+export CUDA_VISIBLE_DEVICES=0
 RUN=smoke_koopmanlab_ns_v1e3_gpu0
 
 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
   --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" \
   --run-name "$RUN" \
+  --output-dir "$OUT_DIR" \
   --epochs 1 \
   --batch-size 10 \
   --t-in 10 \
@@ -163,7 +182,7 @@ nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --modes 16 \
   --decompose 8 \
   --device cuda \
-  > "logs/$RUN.log" 2>&1 &
+  > "$LOG_DIR/$RUN.log" 2>&1 &
 
 echo $!
 ```
@@ -171,32 +190,35 @@ echo $!
 查看进度：
 
 ```bash
-tail -f logs/smoke_koopmanlab_ns_v1e3_gpu0.log
+tail -f logs/stage0_kno_baseline/smoke_koopmanlab_ns_v1e3_gpu0.log
 ```
 
 查看输出：
 
 ```bash
-find outputs/smoke_koopmanlab_ns_v1e3_gpu0 -maxdepth 2 -type f
-cat outputs/smoke_koopmanlab_ns_v1e3_gpu0/metrics.csv
-tail -n 5 outputs/smoke_koopmanlab_ns_v1e3_gpu0/rollout_error_by_step.csv
+find outputs/stage0_kno_baseline/smoke_koopmanlab_ns_v1e3_gpu0 -maxdepth 2 -type f
+cat outputs/stage0_kno_baseline/smoke_koopmanlab_ns_v1e3_gpu0/metrics.csv
+tail -n 5 outputs/stage0_kno_baseline/smoke_koopmanlab_ns_v1e3_gpu0/rollout_error_by_step.csv
 ```
 
 ### Smoke: NS v1e-4
 
-如果 v1e-4 数据已准备好：
-
 ```bash
 source configs/data_paths.env
-export CUDA_VISIBLE_DEVICES=0
-mkdir -p logs outputs
 
+STAGE=stage0_kno_baseline
+LOG_DIR="logs/$STAGE"
+OUT_DIR="outputs/$STAGE"
+mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
+
+export CUDA_VISIBLE_DEVICES=0
 RUN=smoke_koopmanlab_ns_v1e4_gpu0
 
 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
   --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" \
   --run-name "$RUN" \
+  --output-dir "$OUT_DIR" \
   --epochs 1 \
   --batch-size 10 \
   --t-in 10 \
@@ -206,7 +228,7 @@ nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --modes 16 \
   --decompose 8 \
   --device cuda \
-  > "logs/$RUN.log" 2>&1 &
+  > "$LOG_DIR/$RUN.log" 2>&1 &
 
 echo $!
 ```
@@ -219,7 +241,11 @@ Smoke test 通过后再跑 full run。当前只有两张 RTX A6000 空闲时，�
 
 ```bash
 source configs/data_paths.env
-mkdir -p logs outputs
+
+STAGE=stage0_kno_baseline
+LOG_DIR="logs/$STAGE"
+OUT_DIR="outputs/$STAGE"
+mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
 
 RUN=kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_seed42
 
@@ -227,6 +253,7 @@ CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/official_kno/train_koopmanlab
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
   --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" \
   --run-name "$RUN" \
+  --output-dir "$OUT_DIR" \
   --epochs 500 \
   --batch-size 10 \
   --t-in 10 \
@@ -240,7 +267,7 @@ CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/official_kno/train_koopmanlab
   --gamma 0.5 \
   --seed 42 \
   --device cuda \
-  > "logs/$RUN.log" 2>&1 &
+  > "$LOG_DIR/$RUN.log" 2>&1 &
 
 echo $!
 ```
@@ -249,7 +276,11 @@ echo $!
 
 ```bash
 source configs/data_paths.env
-mkdir -p logs outputs
+
+STAGE=stage0_kno_baseline
+LOG_DIR="logs/$STAGE"
+OUT_DIR="outputs/$STAGE"
+mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
 
 RUN=kno_koopmanlab_ns_v1e4_o32_m16_r8_t40_ep500_seed42
 
@@ -257,6 +288,7 @@ CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/official_kno/train_koopmanlab
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
   --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" \
   --run-name "$RUN" \
+  --output-dir "$OUT_DIR" \
   --epochs 500 \
   --batch-size 10 \
   --t-in 10 \
@@ -270,7 +302,7 @@ CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/official_kno/train_koopmanlab
   --gamma 0.5 \
   --seed 42 \
   --device cuda \
-  > "logs/$RUN.log" 2>&1 &
+  > "$LOG_DIR/$RUN.log" 2>&1 &
 
 echo $!
 ```
@@ -293,14 +325,14 @@ ps -u "$USER" -f | grep train_koopmanlab_ns.py | grep -v grep
 查看日志：
 
 ```bash
-tail -f logs/<run_name>.log
+tail -f logs/stage0_kno_baseline/<run_name>.log
 ```
 
 查看指标：
 
 ```bash
-cat outputs/<run_name>/metrics.csv
-tail -n 5 outputs/<run_name>/rollout_error_by_step.csv
+cat outputs/stage0_kno_baseline/<run_name>/metrics.csv
+tail -n 5 outputs/stage0_kno_baseline/<run_name>/rollout_error_by_step.csv
 ```
 
 ## 9. 停止任务
@@ -316,15 +348,18 @@ kill <PID>
 
 ```bash
 python scripts/collect_results.py
+cat results/stage0_kno_baseline/run_summary.csv
 cat results/run_summary.csv
 ```
 
-只提交轻量结果：
+## 11. 提交规则
+
+只提交轻量结果、文档和源码：
 
 ```bash
 git status --short
 git add README.md docs configs ref scripts experiments src tests results reports
-git commit -m "Add KNO baseline experiment scaffold"
+git commit -m "Add stage0 KNO baseline results"
 git push origin main
 ```
 
@@ -342,7 +377,7 @@ logs/
 *.hdf5
 ```
 
-## 11. 当前最推荐执行顺序
+## 12. 当前最推荐执行顺序
 
 ```text
 1. 准备 KoopmanLab 官方 NS 数据

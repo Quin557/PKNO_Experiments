@@ -72,6 +72,7 @@ logs/<run_name>.log
 
 ```text
 docs/server_run_checklist.md
+docs/output_layout.md
 ```
 
 ### 2. 指标与诊断补齐
@@ -182,6 +183,7 @@ ref/data_cards/
 
 ```text
 docs/server_run_checklist.md
+docs/output_layout.md
 ```
 
 实验记录规范：

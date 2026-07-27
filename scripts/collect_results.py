@@ -15,7 +15,7 @@ def _float_or_inf(value: str | None) -> float:
 
 def main() -> None:
     rows: list[dict[str, str]] = []
-    for metric_path in sorted(Path("outputs").glob("*/metrics.csv")):
+    for metric_path in sorted(Path("outputs").glob("*/*/metrics.csv")):
         with metric_path.open(newline="") as f:
             data = list(csv.DictReader(f))
         if not data:
@@ -30,8 +30,10 @@ def main() -> None:
                 or r.get("test_rel_l2")
             ),
         )
+        stage = metric_path.parent.parent.name
         rows.append(
             {
+                "stage": stage,
                 "run_name": metric_path.parent.name,
                 "last_epoch": last.get("epoch", ""),
                 "best_epoch": best.get("epoch", ""),
@@ -45,12 +47,37 @@ def main() -> None:
             }
         )
 
+    rows_by_stage: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        rows_by_stage.setdefault(row["stage"], []).append(row)
+
+    for stage, stage_rows in rows_by_stage.items():
+        stage_out = Path("results") / stage / "run_summary.csv"
+        stage_out.parent.mkdir(parents=True, exist_ok=True)
+        with stage_out.open("w", newline="") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "stage",
+                    "run_name",
+                    "last_epoch",
+                    "best_epoch",
+                    "best_full_rel_l2",
+                    "best_step_rel_l2",
+                    "notes",
+                ],
+            )
+            writer.writeheader()
+            writer.writerows(stage_rows)
+        print(stage_out)
+
     out = Path("results/run_summary.csv")
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="") as f:
         writer = csv.DictWriter(
             f,
             fieldnames=[
+                "stage",
                 "run_name",
                 "last_epoch",
                 "best_epoch",

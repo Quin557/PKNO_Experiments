@@ -5,7 +5,7 @@
 每个正式实验应该写出：
 
 ```text
-outputs/<run_name>/
+outputs/<stage_name>/<run_name>/
   config.yaml
   args.json
   env.txt
@@ -14,6 +14,18 @@ outputs/<run_name>/
   rollout_error_by_step.csv
   checkpoint_best.pt      # git 忽略
   checkpoint_last.pt      # git 忽略
+```
+
+日志应写入：
+
+```text
+logs/<stage_name>/<run_name>.log
+```
+
+阶段目录名称统一见：
+
+```text
+docs/output_layout.md
 ```
 
 如果 KoopmanLab 官方脚本不能直接写这些文件，应优先使用薄包装脚本或后处理脚本补齐记录，而不是直接改模型逻辑。
