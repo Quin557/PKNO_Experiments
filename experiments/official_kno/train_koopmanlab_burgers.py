@@ -7,6 +7,7 @@ import os
 import platform
 import sys
 from pathlib import Path
+from typing import Any
 
 import torch
 import yaml
@@ -33,7 +34,17 @@ def parse_args() -> argparse.Namespace:
 
 
 def write_json(path: Path, obj: dict) -> None:
-    path.write_text(json.dumps(obj, indent=2, sort_keys=True), encoding="utf-8")
+    path.write_text(json.dumps(to_builtin(obj), indent=2, sort_keys=True), encoding="utf-8")
+
+
+def to_builtin(value: Any) -> Any:
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, dict):
+        return {key: to_builtin(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [to_builtin(item) for item in value]
+    return value
 
 
 def write_env(path: Path) -> None:
@@ -66,9 +77,7 @@ def main() -> None:
     out_dir = args.output_dir / args.run_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    config = vars(args).copy()
-    config["data_path"] = str(args.data_path)
-    config["koopmanlab_root"] = str(args.koopmanlab_root)
+    config = to_builtin(vars(args).copy())
     config["device_resolved"] = str(device)
     write_json(out_dir / "args.json", config)
     (out_dir / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=True), encoding="utf-8")
