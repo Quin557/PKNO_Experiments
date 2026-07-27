@@ -255,7 +255,7 @@ mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
 
 RUN=kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_seed42
 
-CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
+CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
   --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" \
   --run-name "$RUN" \
@@ -290,7 +290,7 @@ mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
 
 RUN=kno_koopmanlab_ns_v1e4_o32_m16_r8_t40_ep500_seed42
 
-CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
+CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
   --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" \
   --run-name "$RUN" \
