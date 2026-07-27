@@ -139,6 +139,34 @@ source configs/data_paths.env
 ls -lh "$DATA_ROOT/$SHALLOW_WATER_FILE"
 ```
 
+确认 HDF5 结构：
+
+```bash
+python - "$DATA_ROOT/$SHALLOW_WATER_FILE" <<'PY'
+import sys, h5py
+
+with h5py.File(sys.argv[1], "r") as f:
+    keys = sorted(f.keys())
+    print("root key count:", len(keys))
+    print("first keys:", keys[:5])
+    print("last keys:", keys[-5:])
+    if "data" in f:
+        print("/data", f["data"].shape, f["data"].dtype)
+    else:
+        first = keys[0]
+        print(f"{first}/data", f[f"{first}/data"].shape, f[f"{first}/data"].dtype)
+PY
+```
+
+`experiments/official_kno/train_koopmanlab_shallow_water.py` 已兼容两种格式：
+
+```text
+/data                         # KoopmanLab 扁平格式
+0000/data, 0001/data, ...      # PDEBench 2D_rdb_NA_NA.h5 原始 group 格式
+```
+
+PDEBench 原始样本通常是 `(T, X, Y, C)`，脚本会在内存中转换为 KNO 需要的 `(B, X, Y, T)`，不需要提前另存一个转换后的 HDF5 文件。默认 split 为 `--ntrain 900 --ntest 100`，对应 KoopmanLab shallow-water loader 的官方默认设置。
+
 ## 6. Shallow-water smoke test
 
 ```bash
@@ -162,6 +190,8 @@ nohup python -u experiments/official_kno/train_koopmanlab_shallow_water.py \
   --t-in 10 \
   --t-out 40 \
   --sub 1 \
+  --ntrain 900 \
+  --ntest 100 \
   --operator-size 32 \
   --modes 16 \
   --decompose 8 \
@@ -201,6 +231,8 @@ CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/official_kno/train_koopmanlab
   --t-in 10 \
   --t-out 40 \
   --sub 1 \
+  --ntrain 900 \
+  --ntest 100 \
   --operator-size 32 \
   --modes 16 \
   --decompose 8 \
