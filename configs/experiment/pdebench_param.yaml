@@ -1,0 +1,10 @@
+experiment: pdebench_param
+stage: 3
+dataset: pdebench
+status: deferred
+goal:
+  - parameter interpolation
+  - parameter extrapolation
+  - cross-condition generalization
+notes:
+  - Do not block Stage 0 on PDEBench.

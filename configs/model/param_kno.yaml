@@ -1,0 +1,11 @@
+model: param_kno
+stage: 3
+status: planned
+operator:
+  type: parameterized_koopman
+  inputs:
+    - frequency_encoding
+    - physical_condition
+    - optional_state_embedding
+notes:
+  - Start from toy/PKNN-style systems before large PDEBench experiments.

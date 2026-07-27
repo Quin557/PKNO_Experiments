@@ -1,0 +1,10 @@
+experiment: shallow_water_rollout
+stage: 0
+dataset: shallow_water
+status: source_to_confirm_from_koopmanlab_or_kno_paper
+goal:
+  - add one more KNO-paper-style rollout baseline if data is accessible
+outputs:
+  - metrics.csv
+  - spectral_metrics.csv
+  - rollout_error_by_step.csv

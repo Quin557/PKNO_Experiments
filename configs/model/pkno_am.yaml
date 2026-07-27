@@ -1,0 +1,10 @@
+model: pkno_am
+stage: 4
+status: planned
+components:
+  - shared_dictionary
+  - parameterized_koopman_family
+  - frequency_conditioned_operator_generation
+  - optional_high_frequency_residual
+notes:
+  - Final candidate only after Stage 0-3 evidence is collected.

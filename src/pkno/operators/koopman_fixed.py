@@ -1,0 +1,1 @@
+"""Fixed Koopman operator placeholder."""

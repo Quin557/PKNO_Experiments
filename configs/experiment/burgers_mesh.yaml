@@ -1,0 +1,16 @@
+experiment: burgers_mesh
+stage: 0
+dataset: koopmanlab_burgers
+goal:
+  - reproduce official KNO Burgers baseline
+  - validate spectral metrics
+  - prepare mesh-independence tests
+source_priority:
+  - official_koopmanlab_loader
+  - official_kno_data
+outputs:
+  - metrics.csv
+  - spectral_metrics.csv
+  - rollout_error_by_step.csv
+  - config.yaml
+  - env.txt

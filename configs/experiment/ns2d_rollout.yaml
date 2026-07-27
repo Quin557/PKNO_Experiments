@@ -1,0 +1,17 @@
+experiment: ns2d_rollout
+stage: 0
+dataset: koopmanlab_navier_stokes
+goal:
+  - reproduce official KNO Navier-Stokes baseline
+  - evaluate long rollout
+  - evaluate spectrum and gradient errors
+source_priority:
+  - official_koopmanlab_demo
+  - kno_paper_setting
+  - official_kno_data
+outputs:
+  - metrics.csv
+  - spectral_metrics.csv
+  - rollout_error_by_step.csv
+  - config.yaml
+  - env.txt

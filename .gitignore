@@ -1,0 +1,83 @@
+# Private configuration
+configs/data_paths.env
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+
+# Large experiment artifacts
+data/*
+!data/.gitkeep
+!data/raw/
+!data/raw/.gitkeep
+!data/processed/
+!data/processed/.gitkeep
+!data/index/
+!data/index/.gitkeep
+outputs/*
+!outputs/.gitkeep
+checkpoints/
+logs/
+wandb/
+mlruns/
+
+# Model/data binaries
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.hdf5
+*.mat
+*.npy
+*.npz
+*.pkl
+*.pickle
+
+# Generated figures are committed only after explicit selection.
+reports/*.png
+reports/*.jpg
+reports/*.jpeg
+
+# External source trees and large references
+external/*
+!external/README.md
+ref/papers/*.pdf
+ref/**/*.png
+ref/**/*.jpg
+ref/**/*.jpeg
+ref/**/*.pptx
+ref/**/*.docx
+ref/**/*.mat
+ref/**/*.h5
+ref/**/*.hdf5
+ref/**/*.npy
+ref/**/*.npz
+!ref/
+!ref/README.md
+!ref/code_notes/
+!ref/code_notes/*.md
+!ref/data_cards/
+!ref/data_cards/*.md
+!ref/equations/
+!ref/equations/*.md
+!ref/figures/
+!ref/figures/**/*.md
+
+# Office temp files
+~$*
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

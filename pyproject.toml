@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pkno-experiments"
+version = "0.1.0"
+description = "Experiment workspace for KNO baselines and PKNO-family neural operator research."
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "scipy",
+  "h5py",
+  "matplotlib",
+  "tqdm",
+  "pandas",
+  "pyyaml",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,20 @@
+model: kno
+source_priority:
+  - official_koopmanlab
+  - kno_paper
+  - local_reimplementation
+defaults:
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  optimizer: adam
+  learning_rate: 0.001
+  scheduler: step_lr
+  scheduler_step_size: 100
+  scheduler_gamma: 0.5
+losses:
+  prediction_weight: 5.0
+  reconstruction_weight: 0.5
+notes:
+  - Keep official KoopmanLab settings when reproducing paper baselines.
+  - Change only one setting at a time after baseline reproduction.

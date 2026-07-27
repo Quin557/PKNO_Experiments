@@ -1,0 +1,14 @@
+model: am_kno
+stage: 1
+status: planned
+base_model: kno
+operator:
+  type: frequency_conditioned_koopman
+  generator: shared_mlp
+  inputs:
+    - frequency_encoding
+planned_variants:
+  - K_k=f(k)
+  - K_k=f(k,u_embed)
+notes:
+  - Do not start before Stage 0 KNO baselines are recorded.
