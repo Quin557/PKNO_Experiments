@@ -11,7 +11,7 @@
 | `baselines/` | 官方 baseline、阶段性 baseline 运行指南 | [stage0_burgers_shallow_water_run_guide.md](baselines/stage0_burgers_shallow_water_run_guide.vmd) |
 | `experiments/` | 实验记录规范、输出目录、命名规则 | [experiment_protocol.md](experiments/experiment_protocol.md), [output_layout.md](experiments/output_layout.md) |
 | `metrics/` | 指标定义、评估方式、诊断说明 | [high_frequency_metrics.md](metrics/high_frequency_metrics.md) |
-| `models/` | 模型设计、迁移 notes、算法决策记录 | [model_design_decisions.md](models/model_design_decisions.md), [pytorch_porting_notes_pknn.md](models/pytorch_porting_notes_pknn.md) |
+| `models/` | 模型设计、迁移 notes、算法决策记录 | [model_design_decisions.md](models/model_design_decisions.md), [pytorch_porting_notes_pknn.md](models/pytorch_porting_notes_pknn.md), [stage4_0_am_pkno_model_design.md](models/stage4_0_am_pkno_model_design.md) |
 | `server/` | 服务器环境、训练执行、运维检查清单 | [server_run_checklist.md](server/server_run_checklist.md) |
 | `reports/` | 阶段报告、准备报告、长文归档 | [project_preparation_report.md](reports/project_preparation_report.md), [pkno_experiment_preparation_report.md](reports/pkno_experiment_preparation_report.md) |
 
