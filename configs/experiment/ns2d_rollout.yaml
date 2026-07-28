@@ -13,6 +13,16 @@ paper_aligned_split:
   ntrain: 1000
   ntest: 200
   note: "Use --ntrain 1000 --ntest 200 explicitly for v1e-4 to avoid KoopmanLab's larger default split."
+time_horizon:
+  v1e-3:
+    t_in: 10
+    t_out: 40
+    expected_time_steps: 50
+  v1e-4:
+    t_in: 10
+    t_out: 40
+    expected_time_steps: 50
+    note: "The current server file is named ns_V1e-4_N10000_T30.mat but has u shape (50, 64, 64, 10000). Re-check shape if the data source changes."
 outputs:
   - metrics.csv
   - spectral_metrics.csv

@@ -217,6 +217,14 @@ v1e-4 必须显式指定样本数：
 
 这样避免 KoopmanLab 默认 v1e-4 分支使用更多训练样本，并对齐 KNO 论文的 `1000/200` 设置。
 
+注意：虽然文件名是 `ns_V1e-4_N10000_T30.mat`，但当前服务器文件的 `u` shape 为 `(50, 64, 64, 10000)`，KoopmanLab loader 实际可以使用：
+
+```text
+--t-in 10 --t-out 40
+```
+
+如果后续换了其他来源的 v1e-4 文件，先检查 `u` 的时间维度，再决定 `t_out`。
+
 ```bash
 source configs/data_paths.env
 
@@ -255,6 +263,12 @@ Smoke test 通过后再跑 full run。当前只有两张 RTX A6000 空闲时，�
 
 ### GPU 0: NS v1e-3 full
 
+当前 `lr=0.005` 的 NS v1e-3 长训日志已经在 epoch 27 出现突发发散。该 run 保留为 official-demo-lr 失败记录；后续正式可用 baseline 优先跑稳定复现版本：
+
+```text
+--lr 0.001
+```
+
 ```bash
 source configs/data_paths.env
 
@@ -263,7 +277,7 @@ LOG_DIR="logs/$STAGE"
 OUT_DIR="outputs/$STAGE"
 mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
 
-RUN=kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_seed42
+RUN=kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_lr001_seed42_rerun1
 
 CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
@@ -278,7 +292,7 @@ CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/official_kno/train_koopmanlab
   --operator-size 32 \
   --modes 16 \
   --decompose 8 \
-  --lr 0.005 \
+  --lr 0.001 \
   --step-size 100 \
   --gamma 0.5 \
   --seed 42 \
@@ -290,10 +304,10 @@ echo $!
 
 ### GPU 1: NS v1e-4 full
 
-v1e-4 full run 同样显式使用 KNO 论文样本数：
+v1e-4 full run 同样显式使用 KNO 论文样本数。低粘度 NS 更难稳定训练，当前 `lr=0.005` run 效果很差；下一轮同样优先使用：
 
 ```text
---ntrain 1000 --ntest 200
+--ntrain 1000 --ntest 200 --lr 0.001
 ```
 
 ```bash
@@ -304,7 +318,7 @@ LOG_DIR="logs/$STAGE"
 OUT_DIR="outputs/$STAGE"
 mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
 
-RUN=kno_koopmanlab_ns_v1e4_o32_m16_r8_t40_ep500_seed42
+RUN=kno_koopmanlab_ns_v1e4_o32_m16_r8_t40_ep500_lr001_seed42_rerun1
 
 CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
@@ -321,7 +335,7 @@ CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/official_kno/train_koopmanlab
   --operator-size 32 \
   --modes 16 \
   --decompose 8 \
-  --lr 0.005 \
+  --lr 0.001 \
   --step-size 100 \
   --gamma 0.5 \
   --seed 42 \

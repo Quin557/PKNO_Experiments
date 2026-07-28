@@ -101,6 +101,8 @@ ns_V1e-4_N10000_T30.mat
 $DATA_ROOT/navier_stokes/ns_V1e-4_N10000_T30.mat
 ```
 
+注意：当前服务器上的 `ns_V1e-4_N10000_T30.mat` 中 `u` 的 shape 为 `(50, 64, 64, 10000)`，虽然文件名带 `T30`，但实际时间维度是 50。Stage 0 使用该文件时可以按 KoopmanLab loader 运行 `--t-in 10 --t-out 40`。如果后续换了其他来源的同名文件，需要先检查 `u` 的 shape。
+
 ### 3.3 Burgers
 
 第三优先级下载：

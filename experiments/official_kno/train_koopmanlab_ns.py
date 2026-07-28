@@ -86,6 +86,7 @@ def build_navier_stokes_loaders(args: argparse.Namespace, kp: Any):
         raise ValueError("--ntrain and --ntest must be provided together.")
 
     total = args.ntrain + args.ntest
+    print("data path:", args.data_path)
     if args.viscosity_type in {"1e-3", "1e-4"}:
         with h5py.File(args.data_path) as f:
             data = f["u"][..., 0:total]
@@ -99,6 +100,21 @@ def build_navier_stokes_loaders(args: argparse.Namespace, kp: Any):
         data = torch.tensor(data, dtype=torch.float32)
     else:
         raise ValueError(f"Unknown viscosity type: {args.viscosity_type}")
+
+    expected_time_steps = {"1e-3": 50, "1e-4": 50}.get(args.viscosity_type)
+    available_steps = data.shape[-1]
+    if expected_time_steps is not None and available_steps != expected_time_steps:
+        raise ValueError(
+            f"Unexpected time dimension for viscosity {args.viscosity_type}: "
+            f"expected {expected_time_steps}, got {available_steps}. "
+            "Check that --data-path points to the official KoopmanLab/KNO data file."
+        )
+    if args.t_in + args.t_out > available_steps:
+        raise ValueError(
+            f"Requested t_in + t_out = {args.t_in + args.t_out}, "
+            f"but the dataset only has {available_steps} time steps. "
+            "Reduce --t-out or check that --data-path points to the expected NS file."
+        )
 
     train_a = data[: args.ntrain, :: args.sub, :: args.sub, : args.t_in]
     train_u = data[: args.ntrain, :: args.sub, :: args.sub, args.t_in : args.t_in + args.t_out]
