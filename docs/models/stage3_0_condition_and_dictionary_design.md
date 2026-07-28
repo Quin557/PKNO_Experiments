@@ -185,39 +185,3 @@ low/mid/high spectral energy ratios
 ```
 
 这些摘要不属于 `Psi_theta`，而是进入 `K_k(c_n)`。这让同一个共享字典可以保留固定坐标，而 Koopman operator 随当前状态和物理条件变化。
-
-## 6. Shallow-water smoke NaN 的判断
-
-四个 smoke 中只有 shallow-water 出现：
-
-```text
-epoch 0000 | train_full nan | test_full nan
-```
-
-已处理的高风险点：
-
-- loader 现在显式支持 grouped PDEBench 格式 `0000/data: (T,X,Y,C)`。
-- loader 也支持转换后的 root `/data` 格式：`(B,X,Y,T)`, `(B,T,X,Y)`, `(B,X,Y,T,C)`, `(B,T,X,Y,C)`。
-- 旧版对 4D/5D root 数据只靠维度大小判断，可能把 `(B,X,Y,T,C)` 误读成 `(B,T,X,Y,C)`。
-- loader 会在训练前检查 shallow-water tensor 是否含 NaN/Inf，并给出明确错误。
-- 训练循环现在遇到非有限 loss 会直接报错，不再静默写入 `nan` 指标。
-- shallow-water 默认改为更保守的 `lr=2e-4`, `delta_scale=0.02`, `max_grad_norm=0.5`, `dt=0.01`。
-
-如果服务器上仍然报非有限数据，优先检查 HDF5：
-
-```bash
-python - <<'PY'
-import h5py, numpy as np, os
-path = os.path.join(os.environ["DATA_ROOT"], os.environ["SHALLOW_WATER_FILE"])
-with h5py.File(path, "r") as f:
-    print("keys:", list(f.keys())[:5])
-    if "data" in f and isinstance(f["data"], h5py.Dataset):
-        d = f["data"]
-        a = d[: min(2, d.shape[0])]
-        print("/data shape:", d.shape, "finite:", np.isfinite(a).all())
-    else:
-        k = sorted(x for x in f.keys() if isinstance(f[x], h5py.Group) and "data" in f[x])[0]
-        a = f[f"{k}/data"][:]
-        print(k + "/data shape:", a.shape, "finite:", np.isfinite(a).all())
-PY
-```

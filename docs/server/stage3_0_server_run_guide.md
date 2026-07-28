@@ -237,11 +237,11 @@ echo $!
 ### NS v1e-4 full
 
 ```bash
-RUN=pkno_ns_v1e4_o32_m16_r8_t20_ep500_seed42
-CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/stage3_0/train_pkno_ns_v1e4.py \
+RUN=pkno_ns_v1e4_o32_m16_r8_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=4 nohup python -u experiments/stage3_0/train_pkno_ns_v1e4.py \
   --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" \
   --run-name "$RUN" --output-dir "$OUT_DIR" \
-  --epochs 500 --batch-size 10 --t-in 10 --t-out 20 \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 \
   --ntrain 1000 --ntest 200 \
   --operator-size 32 --modes 16 --decompose 8 \
   --lr 5e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda \
