@@ -92,3 +92,4 @@ ref/**/*.npz
 Thumbs.db
 .idea/
 .vscode/
+nohup.out
