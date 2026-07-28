@@ -38,6 +38,8 @@ data/**
 checkpoints/
 wandb/
 mlruns/
+/logs/
+/outputs/
 
 # Model/data binaries
 *.pt

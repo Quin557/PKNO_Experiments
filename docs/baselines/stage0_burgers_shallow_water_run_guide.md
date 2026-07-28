@@ -177,7 +177,7 @@ LOG_DIR="logs/$STAGE"
 OUT_DIR="outputs/$STAGE"
 mkdir -p "$LOG_DIR" "$OUT_DIR" "results/$STAGE" "reports/$STAGE"
 
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=1
 RUN=smoke_koopmanlab_shallow_water_gpu0
 
 nohup python -u experiments/official_kno/train_koopmanlab_shallow_water.py \
