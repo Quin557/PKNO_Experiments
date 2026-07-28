@@ -1,0 +1,23 @@
+experiment: stage1_0_burgers_am_kno
+stage: stage1_0_am_kno
+script: experiments/stage1_0/train_am_kno_burgers.py
+dataset: burgers
+data_env: BURGERS_FILE
+baseline_reference: kno_koopmanlab_burgers_o32_m16_r8_ep500_seed42
+default_args:
+  epochs: 500
+  batch_size: 64
+  sub: 32
+  operator_size: 32
+  decompose: 8
+  max_modes: 0
+  frequency_basis_dim: 32
+  condition_mode: freq
+  lr: 1.0e-3
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt

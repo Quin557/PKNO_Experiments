@@ -1,0 +1,28 @@
+experiment: stage1_0_ns_v1e3_am_kno
+stage: stage1_0_am_kno
+script: experiments/stage1_0/train_am_kno_ns_v1e3.py
+dataset: navier_stokes_v1e3
+data_env: NS2D_V1E3_FILE
+baseline_reference: kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_seed42
+default_args:
+  epochs: 500
+  batch_size: 10
+  t_in: 10
+  t_out: 40
+  ntrain: 1000
+  ntest: 200
+  operator_size: 32
+  decompose: 8
+  max_modes: 0
+  frequency_basis_dim: 32
+  condition_mode: state
+  output_scale: 0.03
+  lr: 5.0e-4
+  max_grad_norm: 1.0
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt

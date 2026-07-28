@@ -1,14 +1,30 @@
 model: am_kno
-stage: 1
-status: planned
+package: src/amkno
+stage: stage1_0
+status: runnable
 base_model: kno
+isolation_rule: "AM-KNO is implemented as a standalone candidate package and does not modify src/pkno model code."
 operator:
-  type: frequency_conditioned_koopman
-  generator: shared_mlp
-  inputs:
-    - frequency_encoding
-planned_variants:
-  - K_k=f(k)
-  - K_k=f(k,u_embed)
+  type: amortized_frequency_generated_koopman
+  default_generator: mlp_chebyshev
+  default_condition_mode: freq
+  variants:
+    freq: "K_k = G_phi(e(k))"
+    state: "K_k = G_phi(e(k), S_theta(history))"
+    state_static: "K_k = G_phi(e(k), S_theta(history), c_static)"
+mode_policy:
+  default_max_modes: 0
+  meaning: "0 means use all FFT modes available at the current grid resolution."
+  note: "This is a compute cap, not KNO's per-mode learnable matrix count."
+defaults:
+  operator_size: 32
+  decompose: 8
+  frequency_basis_dim: 32
+  generator_hidden_dim: 128
+  generator_depth: 2
+  output_scale: 0.05
+  use_hf_residual: false
 notes:
-  - Do not start before Stage 0 KNO baselines are recorded.
+  - "Default implementation follows AM-FNO's MLP plus orthogonal/Chebyshev basis idea."
+  - "KAN is not enabled in Stage1_0 by default because it adds a heavy dependency and a separate stability variable."
+  - "If AM-KNO proves useful, integration into PKNO should be a later stage, not part of this standalone trial."

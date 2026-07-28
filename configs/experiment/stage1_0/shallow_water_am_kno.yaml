@@ -1,0 +1,29 @@
+experiment: stage1_0_shallow_water_am_kno
+stage: stage1_0_am_kno
+script: experiments/stage1_0/train_am_kno_shallow_water.py
+dataset: shallow_water
+data_env: SHALLOW_WATER_FILE
+baseline_reference: kno_koopmanlab_shallow_water_o32_m16_r8_t40_ep500_seed42
+default_args:
+  epochs: 500
+  batch_size: 5
+  t_in: 10
+  t_out: 40
+  ntrain: 900
+  ntest: 100
+  dt: 0.01
+  operator_size: 32
+  decompose: 8
+  max_modes: 0
+  frequency_basis_dim: 32
+  condition_mode: state
+  output_scale: 0.015
+  lr: 2.0e-4
+  max_grad_norm: 0.5
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt
