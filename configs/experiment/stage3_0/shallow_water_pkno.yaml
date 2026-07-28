@@ -1,0 +1,32 @@
+experiment: stage3_0_shallow_water_pkno
+stage: stage3_0
+script: experiments/stage3_0/train_pkno_shallow_water.py
+dataset: shallow_water
+data_env: SHALLOW_WATER_FILE
+condition_fields:
+  - dx
+  - dy
+  - dt
+  - t_in
+  - t_out
+  - sub
+  - radial_dam_break_flag
+default_args:
+  epochs: 500
+  batch_size: 5
+  t_in: 10
+  t_out: 40
+  ntrain: 900
+  ntest: 100
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  lr: 5.0e-4
+  max_grad_norm: 1.0
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt

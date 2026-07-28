@@ -1,0 +1,32 @@
+experiment: stage3_0_ns_v1e4_pkno
+stage: stage3_0
+script: experiments/stage3_0/train_pkno_ns_v1e4.py
+dataset: navier_stokes
+data_env: NS2D_V1E4_FILE
+condition_fields:
+  - log10_viscosity
+  - dx
+  - dy
+  - dt
+  - t_in
+  - t_out
+  - sub
+default_args:
+  epochs: 500
+  batch_size: 10
+  t_in: 10
+  t_out: 20
+  ntrain: 1000
+  ntest: 200
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  lr: 5.0e-4
+  max_grad_norm: 1.0
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt

@@ -1,0 +1,25 @@
+experiment: stage3_0_burgers_pkno
+stage: stage3_0
+script: experiments/stage3_0/train_pkno_burgers.py
+dataset: burgers
+data_env: BURGERS_FILE
+condition_fields:
+  - log10_reynolds
+  - dx
+  - sub
+  - is_periodic
+default_args:
+  epochs: 500
+  batch_size: 64
+  sub: 32
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  lr: 1.0e-3
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt

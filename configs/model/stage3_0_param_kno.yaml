@@ -1,0 +1,30 @@
+model: stage3_0_param_kno
+stage: stage3_0
+framework: pytorch
+source_reference:
+  pknn: external/pknn_reference
+  kno: external/KoopmanLab/koopmanlab/models/kno.py
+design:
+  shared_dictionary:
+    rule: "Psi_theta is condition-independent; conditions do not enter this encoder."
+    dictionary_hidden_dim: 128
+    dictionary_depth: 2
+  parameterized_koopman:
+    rule: "K_k = K0_k + DeltaK_phi(freq(k), c_static, c_n_state)"
+    condition_embed_dim: 128
+    state_embed_dim: 64
+    koopman_hidden_dim: 128
+    koopman_depth: 2
+    delta_scale: 0.05
+  rollout:
+    loss: "5 * prediction_mse + 0.5 * reconstruction_mse"
+defaults:
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  lr: 5.0e-4
+  max_grad_norm: 1.0
+notes:
+  - "This is a PyTorch reimplementation of PKNN ideas, not a TensorFlow port."
+  - "PKNN TensorFlow layers are used only as algorithmic reference."
+  - "c_static comes from known dataset/grid/physics settings; c_n_state is computed from the current rollout history at each step."
