@@ -9,8 +9,201 @@ observable coordinates before the parameterized Koopman update is applied.
 
 from __future__ import annotations
 
+import math
+
 import torch
 from torch import nn
+
+
+class HandcraftedObservableBasis(nn.Module):
+    """Dataset-aware fixed basis functions for channels-last PDE fields.
+
+    PKNN's default dictionary is explicitly ``[1, x, DicNN(x)]``.  For PDE
+    fields, the same idea is more useful when ``x`` is augmented with a few
+    local physics observables before the learned block.  These features are
+    still condition-independent, so they preserve the shared-dictionary
+    assumption.
+    """
+
+    _OUTPUT_DIMS = {
+        "generic": 4,
+        "burgers": 9,
+        "navier_stokes": 10,
+        "shallow_water": 10,
+    }
+
+    def __init__(self, input_dim: int, basis_kind: str = "generic") -> None:
+        super().__init__()
+        if basis_kind not in self._OUTPUT_DIMS:
+            allowed = ", ".join(sorted(self._OUTPUT_DIMS))
+            raise ValueError(f"Unknown basis_kind {basis_kind!r}; expected one of: {allowed}.")
+        self.input_dim = input_dim
+        self.basis_kind = basis_kind
+        self.output_dim = self._OUTPUT_DIMS[basis_kind]
+
+    @staticmethod
+    def _latest(x: torch.Tensor) -> torch.Tensor:
+        return x[..., -1:]
+
+    @staticmethod
+    def _history_std(x: torch.Tensor) -> torch.Tensor:
+        if x.shape[-1] == 1:
+            return torch.zeros_like(x[..., :1])
+        return x.std(dim=-1, unbiased=False, keepdim=True)
+
+    @staticmethod
+    def _finite_diff(x: torch.Tensor, dim: int) -> torch.Tensor:
+        if x.shape[dim] <= 1:
+            return torch.zeros_like(x)
+
+        out = torch.zeros_like(x)
+
+        first_out = [slice(None)] * x.ndim
+        first_out[dim] = 0
+        first_next = [slice(None)] * x.ndim
+        first_next[dim] = 1
+        out[tuple(first_out)] = x[tuple(first_next)] - x[tuple(first_out)]
+
+        last_out = [slice(None)] * x.ndim
+        last_out[dim] = x.shape[dim] - 1
+        last_prev = [slice(None)] * x.ndim
+        last_prev[dim] = x.shape[dim] - 2
+        out[tuple(last_out)] = x[tuple(last_out)] - x[tuple(last_prev)]
+
+        if x.shape[dim] > 2:
+            mid = [slice(None)] * x.ndim
+            prev = [slice(None)] * x.ndim
+            nxt = [slice(None)] * x.ndim
+            mid[dim] = slice(1, -1)
+            prev[dim] = slice(0, -2)
+            nxt[dim] = slice(2, None)
+            out[tuple(mid)] = 0.5 * (x[tuple(nxt)] - x[tuple(prev)])
+
+        return out
+
+    @staticmethod
+    def _second_diff(x: torch.Tensor, dim: int) -> torch.Tensor:
+        if x.shape[dim] <= 2:
+            return torch.zeros_like(x)
+
+        out = torch.zeros_like(x)
+        mid = [slice(None)] * x.ndim
+        prev = [slice(None)] * x.ndim
+        nxt = [slice(None)] * x.ndim
+        mid[dim] = slice(1, -1)
+        prev[dim] = slice(0, -2)
+        nxt[dim] = slice(2, None)
+        out[tuple(mid)] = x[tuple(nxt)] - 2.0 * x[tuple(mid)] + x[tuple(prev)]
+        return out
+
+    @staticmethod
+    def _boundary_mask_like(x: torch.Tensor, spatial_dims: tuple[int, ...]) -> torch.Tensor:
+        mask = torch.zeros_like(x)
+        for dim in spatial_dims:
+            first = [slice(None)] * x.ndim
+            last = [slice(None)] * x.ndim
+            first[dim] = 0
+            last[dim] = x.shape[dim] - 1
+            mask[tuple(first)] = 1.0
+            mask[tuple(last)] = 1.0
+        return mask
+
+    def _generic(self, x: torch.Tensor) -> torch.Tensor:
+        latest = self._latest(x)
+        return torch.cat(
+            [
+                torch.ones_like(latest),
+                latest,
+                x.mean(dim=-1, keepdim=True),
+                self._history_std(x),
+            ],
+            dim=-1,
+        )
+
+    def _burgers(self, x: torch.Tensor) -> torch.Tensor:
+        u = self._latest(x)
+        ux = self._finite_diff(u, dim=1)
+        uxx = self._second_diff(u, dim=1)
+        return torch.cat(
+            [
+                torch.ones_like(u),
+                u,
+                u.square(),
+                u.square() * u,
+                torch.sin(math.pi * u),
+                torch.cos(math.pi * u),
+                ux,
+                uxx,
+                u * ux,
+            ],
+            dim=-1,
+        )
+
+    def _navier_stokes(self, x: torch.Tensor) -> torch.Tensor:
+        w = self._latest(x)
+        history_mean = x.mean(dim=-1, keepdim=True)
+        history_std = self._history_std(x)
+        dt_field = w - x[..., :1]
+        wx = self._finite_diff(w, dim=1)
+        wy = self._finite_diff(w, dim=2)
+        grad_mag = torch.sqrt(wx.square() + wy.square() + 1e-12)
+        lap = self._second_diff(w, dim=1) + self._second_diff(w, dim=2)
+        return torch.cat(
+            [
+                torch.ones_like(w),
+                w,
+                history_mean,
+                history_std,
+                w.square(),
+                dt_field,
+                wx,
+                wy,
+                grad_mag,
+                lap,
+            ],
+            dim=-1,
+        )
+
+    def _shallow_water(self, x: torch.Tensor) -> torch.Tensor:
+        h = self._latest(x)
+        history_mean = x.mean(dim=-1, keepdim=True)
+        history_std = self._history_std(x)
+        hx = self._finite_diff(h, dim=1)
+        hy = self._finite_diff(h, dim=2)
+        grad_mag = torch.sqrt(hx.square() + hy.square() + 1e-12)
+        lap = self._second_diff(h, dim=1) + self._second_diff(h, dim=2)
+        boundary = self._boundary_mask_like(h, spatial_dims=(1, 2))
+        spatial_mean = h.mean(dim=(1, 2), keepdim=True)
+        return torch.cat(
+            [
+                torch.ones_like(h),
+                h,
+                history_mean,
+                history_std,
+                h.square(),
+                grad_mag,
+                lap,
+                boundary,
+                boundary * h,
+                h - spatial_mean,
+            ],
+            dim=-1,
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.basis_kind == "burgers":
+            if x.ndim != 3:
+                raise ValueError(f"Burgers basis expects [B, X, C], got {tuple(x.shape)}.")
+            return self._burgers(x)
+        if self.basis_kind == "navier_stokes":
+            if x.ndim != 4:
+                raise ValueError(f"Navier-Stokes basis expects [B, X, Y, C], got {tuple(x.shape)}.")
+            return self._navier_stokes(x)
+        if self.basis_kind == "shallow_water":
+            if x.ndim != 4:
+                raise ValueError(f"Shallow-water basis expects [B, X, Y, C], got {tuple(x.shape)}.")
+            return self._shallow_water(x)
+        return self._generic(x)
 
 
 class SharedPointwiseDictionary(nn.Module):
@@ -22,9 +215,11 @@ class SharedPointwiseDictionary(nn.Module):
     - 2D: ``[B, X, Y, C]``
 
     The output has the same spatial grid and ``observable_dim`` channels.  A
-    learned physical lift is added to a trainable nonlinear observable block.
-    This is the PyTorch analogue of PKNN's ``[state, NN(state)]`` dictionary,
-    adapted to KNO fields instead of flat ODE states.
+    The first channels are explicit handcrafted observables such as ``1``,
+    ``u``, gradients, and low-order nonlinear terms.  The remaining channels
+    are trainable nonlinear observables.  This is the PyTorch analogue of
+    PKNN's ``[1, state, NN(state)]`` dictionary, adapted to KNO fields instead
+    of flat ODE states.
     """
 
     def __init__(
@@ -33,6 +228,7 @@ class SharedPointwiseDictionary(nn.Module):
         observable_dim: int,
         hidden_dim: int = 128,
         depth: int = 2,
+        basis_kind: str = "generic",
         activation: type[nn.Module] = nn.GELU,
     ) -> None:
         super().__init__()
@@ -43,23 +239,36 @@ class SharedPointwiseDictionary(nn.Module):
 
         self.input_dim = input_dim
         self.observable_dim = observable_dim
-        self.physical_lift = nn.Linear(input_dim, observable_dim)
+        self.basis_kind = basis_kind
+        self.fixed_basis = HandcraftedObservableBasis(input_dim=input_dim, basis_kind=basis_kind)
+        self.fixed_dim = self.fixed_basis.output_dim
+        self.learned_dim = observable_dim - self.fixed_dim
+        if self.learned_dim < 0:
+            raise ValueError(
+                f"observable_dim={observable_dim} is too small for {basis_kind!r} "
+                f"fixed basis with {self.fixed_dim} channels."
+            )
 
         layers: list[nn.Module] = []
         in_dim = input_dim
-        for _ in range(depth):
-            layers.append(nn.Linear(in_dim, hidden_dim))
-            layers.append(activation())
-            in_dim = hidden_dim
-        layers.append(nn.Linear(in_dim, observable_dim))
-        self.learned_observables = nn.Sequential(*layers)
+        if self.learned_dim > 0:
+            for _ in range(depth):
+                layers.append(nn.Linear(in_dim, hidden_dim))
+                layers.append(activation())
+                in_dim = hidden_dim
+            layers.append(nn.Linear(in_dim, self.learned_dim))
+        self.learned_observables = nn.Sequential(*layers) if layers else None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if x.shape[-1] != self.input_dim:
             raise ValueError(
                 f"Expected last dim {self.input_dim}, got {x.shape[-1]} for shape {tuple(x.shape)}."
             )
-        return torch.tanh(self.physical_lift(x) + self.learned_observables(x))
+        fixed = self.fixed_basis(x)
+        if self.learned_observables is None:
+            return fixed
+        learned = torch.tanh(self.learned_observables(x))
+        return torch.cat([fixed, learned], dim=-1)
 
 
 class PointwiseDecoder(nn.Module):

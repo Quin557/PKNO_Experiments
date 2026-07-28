@@ -293,7 +293,7 @@ def train_autoregressive(
                 "pred_mse_sum": 0.0,
                 "recon_mse_sum": 0.0,
             }
-            for history, target, condition in train_loader:
+            for batch_index, (history, target, condition) in enumerate(train_loader):
                 history = history.to(device)
                 target = target.to(device)
                 condition = condition.to(device)
@@ -310,6 +310,11 @@ def train_autoregressive(
                 )
                 pred = out["pred"]
                 loss = config.pred_weight * out["pred_mse"] + config.recon_weight * out["recon_mse"]
+                if not bool(torch.isfinite(loss).item()):
+                    raise FloatingPointError(
+                        f"Non-finite training loss at epoch={epoch}, batch={batch_index}. "
+                        "Check data layout/non-finite inputs or reduce --lr, --delta-scale, or --decompose."
+                    )
                 optimizer.zero_grad()
                 loss.backward()
                 if config.max_grad_norm is not None:

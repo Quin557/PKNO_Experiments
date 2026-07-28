@@ -7,6 +7,8 @@ source_reference:
 design:
   shared_dictionary:
     rule: "Psi_theta is condition-independent; conditions do not enter this encoder."
+    basis_rule: "Fixed channels are [1, dataset-specific handcrafted observables]; remaining channels are learned NN observables."
+    basis_kind: "dataset_default"
     dictionary_hidden_dim: 128
     dictionary_depth: 2
   parameterized_koopman:

@@ -1,106 +1,178 @@
 # Stage3_0 条件与共享字典设计说明
 
-## 1. 先澄清符号
+## 1. 条件符号
 
-Stage3_0 中不要把所有条件都叫成一个固定参数。更准确的拆法是：
+Stage3_0 不把所有条件都理解成一个固定参数。当前实现采用下面的拆分：
 
 ```text
-c_static: 数据集级或轨迹级已知条件
-c_n:      第 n 个预测区间使用的条件
-c_n_state: 从当前历史状态 h_n 提取的动态状态条件摘要
+c_static:   数据集级或轨迹级已知条件，例如 viscosity、dx、dt、t_in
+c_n:        第 n 次 Koopman 推进一步使用的条件
+c_n_state:  从当前 history h_n 提取的动态状态摘要
 ```
 
-当前实现中的训练脚本传入模型的 `condition` 是显式有限维条件，主要对应 `c_static`。模型内部还会从当前 history 实时计算 `c_n_state`，两者合并后用于生成 Koopman 矩阵：
+训练脚本传入模型的 `condition` 对应有限维的 `c_static`。模型内部还从当前 history 实时计算 `c_n_state`，然后二者共同进入 Koopman 矩阵生成器：
 
 ```text
 z_n = Psi_theta(h_n)
 c_n_state = S_theta(h_n)
-K_k = K0_k + DeltaK_phi(freq(k), c_static, c_n_state)
-z_{n+1,k} = K_k z_{n,k}
+K_k(c_n) = K0_k + DeltaK_phi(freq(k), c_static, c_n_state)
+z_hat_{n+1,k} = K_k(c_n) z_hat_{n,k}
 ```
 
-如果未来数据集中有真正随时间变化的 forcing、边界条件、控制量或外部输入，可以把它们作为每步不同的显式 `c_n` 传给模型。当前四个数据集多数没有完整暴露这些变量，因此先用：
+所以当前可理解为：
 
 ```text
-c_n ~= [c_static, c_n_state]
+c_n = [c_static, c_n_state]
 ```
 
-这是为了让 Stage3_0 先可跑、可比较，同时不把理论写死。
+如果后续数据集提供显式时变 forcing、控制量或边界条件，可以把它们作为真正随步数变化的 `c_n` 传入，而不是只依赖 `c_n_state`。
 
-## 2. `c_static` 从哪里来
+## 2. 共享字典的边界
+
+PKNN 参考实现的核心不是 TensorFlow 语法，而是结构：
+
+```text
+Psi(x) = [1, x, learned_dictionary(x)]
+K = K(u)
+```
+
+因此 Stage3_0 的 PKNO 字典现在也显式包含常数项。代码位置：
+
+```text
+src/pkno/dictionaries/shared_dictionary.py
+```
+
+当前形式是：
+
+```text
+Psi_theta(h_n) = [1, handcrafted_basis(h_n), tanh(NN_theta(h_n))]
+```
+
+注意两点：
+
+- `Psi_theta` 不接收 `c_static`，也不接收 `c_n_state`。
+- 条件只进入 `K_k(c_n)` 的生成器。
+
+这样做是为了保持同一套 observable 坐标系。若把 `c` 拼进字典，模型会变成普通 conditional encoder，实验上就很难区分提升来自共享 Koopman family，还是来自条件化表征本身。
+
+## 3. 手工基函数
+
+手工基函数是局部 field observable，输出仍是 channels-last 的 observable field。它们不是最终理论定稿，而是 Stage3_0 用于检验 PKNO 是否有效的实验性物理先验。
 
 ### Burgers
 
-当前 KoopmanLab/FNO Burgers 文件通常只提供：
+默认 `basis_kind=burgers`，输入通常是单通道初态或短历史。固定字典通道为：
 
 ```text
-a: 初始条件
-u: 目标解
+1
+u
+u^2
+u^3
+sin(pi u)
+cos(pi u)
+u_x
+u_xx
+u * u_x
 ```
 
-没有逐样本 viscosity、forcing 或边界条件字段。因此 Stage3_0 的显式条件只能来自实验设置和数据文件约定：
+理由：
 
-| 字段 | 来源 | 含义 |
-|---|---|---|
-| `log10_reynolds` | 文件名/数据卡中的 R10 约定 | 近似代表 Burgers 数据生成粘性/雷诺条件 |
-| `dx` | `1 / (grid_size - 1)` | 网格 spacing |
-| `sub` | 命令行 `--sub` | 下采样倍率 |
-| `is_periodic` | 数据生成/loader 假设 | 周期边界标识 |
-
-这些确实是弱条件。Burgers 在 Stage3_0 的主要作用不是证明强跨参数泛化，而是快速验证：
-
-```text
-1D complex K_k 生成是否稳定
-shared dictionary + parameterized K 是否能训练
-rollout/metrics/output 是否可用
-```
-
-真正的样本级差异主要来自 `c_n_state = S_theta(history)`。
+- `1, u, u^2, u^3` 是 Koopman/EDMD 常见低阶 observable。
+- `sin(pi u), cos(pi u)` 给 1D 周期或近周期结构一个 bounded 非线性基。
+- `u_x, u_xx, u u_x` 对应 Burgers 中平流和扩散的局部结构。
+- Burgers 当前文件里的 `R10/sub/dx` 更像弱条件，真正样本差异主要来自 `h_n`。
 
 ### Navier-Stokes v1e-3 / v1e-4
 
-NS 是当前最核心，因为 viscosity 是明确物理条件。
+默认 `basis_kind=navier_stokes`。当前 NS 数据以标量涡量场历史作为输入，固定字典通道为：
 
-| 字段 | 来源 |
-|---|---|
-| `log10_viscosity` | 脚本名与数据文件：`1e-3` 或 `1e-4` |
-| `dx`, `dy` | 读取后网格大小计算 |
-| `dt` | 命令行，默认 `1.0`，表示离散采样间隔单位 |
-| `t_in`, `t_out` | 命令行 |
-| `sub` | 命令行 |
+```text
+1
+w_n
+mean_t(w)
+std_t(w)
+w_n^2
+w_n - w_0
+w_x
+w_y
+sqrt(w_x^2 + w_y^2)
+Delta w
+```
 
-单独跑 v1e-3 或 v1e-4 时，viscosity 在一个 run 内是常量；这仍能验证代码稳定性，但不能充分证明参数插值。更强实验应是联合训练：
+理由：
+
+- NS 是 Stage3_0 核心，因为 `log10(viscosity)` 是明确物理条件。
+- `w_x, w_y, Delta w` 让 shared dictionary 直接看到局部梯度和粘性项相关结构。
+- `w_n^2` 和梯度模长帮助表达能量、涡量强度和高频增长。
+- `mean_t/std_t/w_n-w_0` 让同一个 `Psi_theta` 在 rollout 中感知历史窗口变化，而不是只看最后一帧。
+
+### Shallow-water
+
+默认 `basis_kind=shallow_water`。当前使用水深标量场，固定字典通道为：
+
+```text
+1
+h_n
+mean_t(h)
+std_t(h)
+h_n^2
+sqrt(h_x^2 + h_y^2)
+Delta h
+boundary_mask
+boundary_mask * h_n
+h_n - mean_xy(h_n)
+```
+
+理由：
+
+- PDEBench radial dam break 的强信号来自初始水深分布、冲击前沿和边界区域。
+- `h_n^2` 可作为浅水能量代理，`h_n - mean_xy(h_n)` 对应局部质量偏差。
+- `boundary_mask` 和 `boundary_mask*h_n` 让字典显式暴露边界区域，而不是全靠 MLP 学出来。
+- 如果 HDF5 后续确认含 `dam_radius/dam_center/height_inside/height_outside/boundary_type`，这些应优先进入 `c_static`。
+
+## 4. `c_static` 来源
+
+### Burgers
+
+```text
+log10_reynolds: 从 burgers_data_R10.mat 文件约定得到
+dx:             1 / (grid_size - 1)
+sub:            命令行下采样率
+is_periodic:    当前 loader 假设为 1
+```
+
+这些是弱条件。Burgers 在 Stage3_0 更适合做 1D sanity check，而不是最强的跨参数泛化证据。
+
+### Navier-Stokes
+
+```text
+log10_viscosity: v1e-3 或 v1e-4
+dx, dy:          读取后的网格 spacing
+dt:              命令行采样间隔
+t_in, t_out:     history 和 rollout 长度
+sub:             下采样率
+```
+
+单独训练 v1e-3 或 v1e-4 时，viscosity 在一个 run 内是常量。更强的 PKNO 实验应做联合训练：
 
 ```text
 train: v1e-3 + v1e-4
-test: v1e-3/v1e-4 seen condition, and ideally unseen v=5e-4
+test:  seen viscosity, ideally unseen v=5e-4
 ```
 
 ### Shallow-water
 
-当前 shallow-water HDF5 若没有 dam radius、basin geometry、边界参数等元数据，就只能使用可确认的条件：
-
-| 字段 | 来源 |
-|---|---|
-| `dx`, `dy` | 网格大小计算 |
-| `dt` | 命令行 |
-| `t_in`, `t_out` | 命令行 |
-| `sub` | 命令行 |
-| `radial_dam_break_flag` | 当前文件 `2D_rdb_NA_NA.h5` 的任务类型标识 |
-
-如果 HDF5 后续确认有更多元数据，应优先补：
-
 ```text
-dam_radius
-dam_center_x, dam_center_y
-height_inside, height_outside
-boundary_type
-topography_or_bathymetry summary
+dx, dy:                  网格 spacing
+dt:                      默认 0.01, 来自 PDEBench radial dam break 配置
+t_in, t_out:             history 和 rollout 长度
+sub:                     下采样率
+radial_dam_break_flag:   当前任务类型标识
 ```
 
-## 3. `c_n_state` 怎么设计
+## 5. `c_n_state` 摘要
 
-`c_n_state` 由 `StateSummaryEncoder` 从当前 history 实时提取，不是固定参数。当前每个输入通道提取：
+`StateSummaryEncoder` 从当前 history 中提取每个输入通道的统计量：
 
 ```text
 mean
@@ -109,121 +181,43 @@ rms energy
 gradient rms
 boundary mean
 boundary std
-low-frequency energy ratio
-mid-frequency energy ratio
-high-frequency energy ratio
+low/mid/high spectral energy ratios
 ```
 
-这对应你提到的：
+这些摘要不属于 `Psi_theta`，而是进入 `K_k(c_n)`。这让同一个共享字典可以保留固定坐标，而 Koopman operator 随当前状态和物理条件变化。
+
+## 6. Shallow-water smoke NaN 的判断
+
+四个 smoke 中只有 shallow-water 出现：
 
 ```text
-状态摘要含能量、梯度能量、频带能量
-shallow_water 使用历史质量/能量、边界区域统计
+epoch 0000 | train_full nan | test_full nan
 ```
 
-实现位置：
+已处理的高风险点：
 
-```text
-src/pkno/dictionaries/shared_dictionary.py
+- loader 现在显式支持 grouped PDEBench 格式 `0000/data: (T,X,Y,C)`。
+- loader 也支持转换后的 root `/data` 格式：`(B,X,Y,T)`, `(B,T,X,Y)`, `(B,X,Y,T,C)`, `(B,T,X,Y,C)`。
+- 旧版对 4D/5D root 数据只靠维度大小判断，可能把 `(B,X,Y,T,C)` 误读成 `(B,T,X,Y,C)`。
+- loader 会在训练前检查 shallow-water tensor 是否含 NaN/Inf，并给出明确错误。
+- 训练循环现在遇到非有限 loss 会直接报错，不再静默写入 `nan` 指标。
+- shallow-water 默认改为更保守的 `lr=2e-4`, `delta_scale=0.02`, `max_grad_norm=0.5`, `dt=0.01`。
+
+如果服务器上仍然报非有限数据，优先检查 HDF5：
+
+```bash
+python - <<'PY'
+import h5py, numpy as np, os
+path = os.path.join(os.environ["DATA_ROOT"], os.environ["SHALLOW_WATER_FILE"])
+with h5py.File(path, "r") as f:
+    print("keys:", list(f.keys())[:5])
+    if "data" in f and isinstance(f["data"], h5py.Dataset):
+        d = f["data"]
+        a = d[: min(2, d.shape[0])]
+        print("/data shape:", d.shape, "finite:", np.isfinite(a).all())
+    else:
+        k = sorted(x for x in f.keys() if isinstance(f[x], h5py.Group) and "data" in f[x])[0]
+        a = f[f"{k}/data"][:]
+        print(k + "/data shape:", a.shape, "finite:", np.isfinite(a).all())
+PY
 ```
-
-注意：这些摘要不进入 `Psi_theta`，只进入 `K_k` 生成器。这样能保留 shared dictionary 的定义。
-
-## 4. 共享字典怎么设计
-
-Stage3_0 的 shared dictionary 是：
-
-```text
-z_n = Psi_theta(h_n)
-```
-
-其中 `h_n` 是历史窗口。代码中使用点态共享映射：
-
-```text
-physical_lift(h_n) + learned_observables(h_n)
-```
-
-然后经过 `tanh` 得到 observable field。它是 KNO 风格的场字典，不是 PKNN 中 flat ODE state 的直接复制。
-
-为什么这样设计：
-
-1. PKNN 要求不同参数条件共享一个 observable space；
-2. KNO 本来就在 encoder 后的 observable field 上做 Fourier-domain Koopman 推进；
-3. PDE 数据在不同网格上仍应保留 neural operator 风格，所以字典采用 pointwise/shared mapping，而不是给每个网格点单独参数。
-
-当前不把 `c` 输入字典：
-
-```text
-Psi_theta(h_n, c)   # 当前不采用
-```
-
-原因是这会让不同条件拥有不同坐标系，削弱 PKNN 的 shared dictionary 假设。Stage3_0 先验证最干净的版本：
-
-```text
-same Psi_theta, different K_k(c_n)
-```
-
-## 5. 理论依据
-
-PKNN 论文处理 parametric dynamics：
-
-```text
-x_{n+1} = f(x_n, u_n)
-Psi(x_{n+1}) ~= K(u_n) Psi(x_n)
-```
-
-关键不是 `u_n` 必须固定，而是每一步存在一个条件值或控制值，决定该步 Koopman operator。静态参数是特例：
-
-```text
-u_n = u, for all n
-```
-
-时变参数则是：
-
-```text
-u_n changes with n
-```
-
-Stage3_0 在 PDE/KNO 中对应：
-
-```text
-h_{n+1} = F_{c_n}(h_n)
-Psi_theta(h_{n+1}) ~= K(c_n) Psi_theta(h_n)
-```
-
-KNO 的 Fourier 实现进一步把一个大矩阵拆成逐模态矩阵：
-
-```text
-z_hat_{n+1,k} = K_k(c_n) z_hat_{n,k}
-```
-
-因此当前设计的理论含义是：
-
-```text
-公共 observable field + 条件化逐频率 Koopman family
-```
-
-而不是“固定参数模型”。
-
-## 6. 当前效果预期
-
-最可能有效的顺序：
-
-1. NS v1e-4 / v1e-3：因为 viscosity 是明确条件，最能体现 parameterized Koopman。
-2. Shallow-water：如果 state summary 捕捉到质量、边界和能量变化，可能改善 rollout 稳定性。
-3. Burgers：主要用于低成本验证与 1D sanity check，除非补充多 viscosity/R 数据，否则不是最强 PKNO 证据。
-
-最值得补的后续实验：
-
-```text
-multi-condition NS:
-  fixed KNO jointly on v1e-3 + v1e-4
-  Param-KNO jointly on v1e-3 + v1e-4
-
-multi-viscosity Burgers:
-  generate or collect R/nu variants
-  train on seen nu
-  test on unseen/interpolated nu
-```
-
-这两个实验会比单文件训练更能突出 PKNO。

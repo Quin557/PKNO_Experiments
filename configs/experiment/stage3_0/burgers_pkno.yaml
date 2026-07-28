@@ -15,6 +15,7 @@ default_args:
   operator_size: 32
   modes: 16
   decompose: 8
+  basis_kind: burgers
   lr: 1.0e-3
   seed: 42
 outputs:

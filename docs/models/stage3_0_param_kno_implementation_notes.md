@@ -87,11 +87,13 @@ K_k = K0_k + DeltaK_phi(freq(k), c_static, c_n_state)
 
 This distinction matters experimentally. If the dictionary changes with `c`, it becomes unclear whether improvements come from a shared parameterized Koopman family or from an ordinary conditional representation.
 
-## 5. Current limitations
+## 5. Current implementation notes
 
-- Stage3_0 does not yet implement a strict PKNN constant observable row such as `(1, 0, ..., 0)`.
+- Stage3_0 now prepends an explicit constant observable channel `1`, followed by dataset-specific handcrafted observables and learned NN observables.
+- Dataset scripts set `--basis-kind` by default: `burgers`, `navier_stokes`, or `shallow_water`.
 - Stage3_0 uses direct complex matrix generation, not low-rank or basis-expanded `K(u)`.
 - Shallow-water currently uses available grid/task metadata plus state summary; richer dam/boundary parameters should be added if present in the HDF5 metadata.
+- Shallow-water loading now checks common grouped/root HDF5 layouts and raises on NaN/Inf data instead of writing silent NaN metrics.
 - Single-file NS runs have constant viscosity within each run. A joint v1e-3/v1e-4 experiment is recommended next for a stronger parameterized Koopman test.
 
 ## 6. Files

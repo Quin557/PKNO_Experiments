@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import torch
 
+from pkno.dictionaries.shared_dictionary import SharedPointwiseDictionary
 from pkno.models.param_kno import ParamKNO1d, ParamKNO2d
 
 
@@ -43,3 +44,16 @@ def test_param_kno_2d_forward_shape():
     pred, recon = model(x, c)
     assert pred.shape == (2, 16, 16, 1)
     assert recon.shape == x.shape
+
+
+def test_shared_dictionary_prepends_constant_channel():
+    dictionary = SharedPointwiseDictionary(
+        input_dim=1,
+        observable_dim=12,
+        hidden_dim=8,
+        basis_kind="burgers",
+    )
+    x = torch.randn(2, 16, 1)
+    z = dictionary(x)
+    assert z.shape == (2, 16, 12)
+    assert torch.allclose(z[..., 0], torch.ones_like(z[..., 0]))

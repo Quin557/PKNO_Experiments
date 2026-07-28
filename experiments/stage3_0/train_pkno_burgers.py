@@ -15,7 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ntrain", type=int, default=1000)
     parser.add_argument("--ntest", type=int, default=200)
     add_common_args(parser)
-    parser.set_defaults(batch_size=64, lr=1e-3, epochs=1)
+    parser.set_defaults(batch_size=64, lr=1e-3, epochs=1, basis_kind="burgers")
     return parser.parse_args()
 
 

@@ -46,6 +46,13 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--decompose", type=int, default=8)
     parser.add_argument("--dictionary-hidden-dim", type=int, default=128)
     parser.add_argument("--dictionary-depth", type=int, default=2)
+    parser.add_argument(
+        "--basis-kind",
+        type=str,
+        default="generic",
+        choices=["generic", "burgers", "navier_stokes", "shallow_water"],
+        help="Handcrafted fixed observables prepended to the learned shared dictionary.",
+    )
     parser.add_argument("--condition-embed-dim", type=int, default=128)
     parser.add_argument("--state-embed-dim", type=int, default=64)
     parser.add_argument("--koopman-hidden-dim", type=int, default=128)
@@ -74,6 +81,7 @@ def build_model(args: argparse.Namespace, bundle: LoaderBundle) -> torch.nn.Modu
         decompose=args.decompose,
         dictionary_hidden_dim=args.dictionary_hidden_dim,
         dictionary_depth=args.dictionary_depth,
+        basis_kind=args.basis_kind,
         condition_embed_dim=args.condition_embed_dim,
         state_embed_dim=args.state_embed_dim,
         koopman_hidden_dim=args.koopman_hidden_dim,

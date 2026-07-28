@@ -35,6 +35,25 @@ def _constant_conditions(num: int, values: list[float]) -> torch.Tensor:
     return torch.tensor(values, dtype=torch.float32).reshape(1, -1).repeat(num, 1)
 
 
+def _require_finite(name: str, tensor: torch.Tensor) -> None:
+    finite = torch.isfinite(tensor)
+    if bool(finite.all()):
+        return
+
+    bad_count = int((~finite).sum().item())
+    finite_values = tensor[finite]
+    if finite_values.numel() > 0:
+        finite_min = float(finite_values.min().item())
+        finite_max = float(finite_values.max().item())
+        range_text = f" finite range=[{finite_min:.6g}, {finite_max:.6g}]"
+    else:
+        range_text = " no finite values"
+    raise ValueError(
+        f"{name} contains {bad_count} non-finite values;{range_text}. "
+        "This usually means the HDF5 conversion produced NaN/Inf values or the wrong data field was read."
+    )
+
+
 def _mat_field(path: Path, field: str) -> torch.Tensor:
     try:
         data = scipy.io.loadmat(path)[field]
@@ -175,49 +194,99 @@ def build_navier_stokes_stage3_loaders(
     )
 
 
-def _sample_to_xy_time(sample: np.ndarray, required_steps: int, sub: int, key: str) -> torch.Tensor:
+def _sample_to_xy_time(
+    sample: np.ndarray,
+    required_steps: int,
+    sub: int,
+    key: str,
+) -> tuple[torch.Tensor, str]:
     if sample.ndim == 4:
-        if sample.shape[0] < required_steps:
-            raise ValueError(f"{key} has {sample.shape[0]} steps; need {required_steps}.")
-        sample = sample[:required_steps, ::sub, ::sub, 0]
+        if sample.shape[-1] < 1:
+            raise ValueError(f"{key} has no channel dimension: shape={sample.shape}.")
+        if sample.shape[1] == sample.shape[2] and sample.shape[0] >= required_steps:
+            sample = sample[:required_steps, ::sub, ::sub, 0]
+            layout = "TXYC"
+        elif sample.shape[0] == sample.shape[1] and sample.shape[2] >= required_steps:
+            sample = sample[::sub, ::sub, :required_steps, 0]
+            layout = "XYTC"
+        else:
+            raise ValueError(
+                f"{key} must look like (T,X,Y,C) or (X,Y,T,C); got {sample.shape}."
+            )
     elif sample.ndim == 3:
-        if sample.shape[0] < required_steps:
-            raise ValueError(f"{key} has {sample.shape[0]} steps; need {required_steps}.")
-        sample = sample[:required_steps, ::sub, ::sub]
+        if sample.shape[1] == sample.shape[2] and sample.shape[0] >= required_steps:
+            sample = sample[:required_steps, ::sub, ::sub]
+            layout = "TXY"
+        elif sample.shape[0] == sample.shape[1] and sample.shape[2] >= required_steps:
+            sample = sample[::sub, ::sub, :required_steps]
+            layout = "XYT"
+        else:
+            raise ValueError(f"{key} must look like (T,X,Y) or (X,Y,T); got {sample.shape}.")
     else:
-        raise ValueError(f"{key} must be (T,X,Y,C) or (T,X,Y), got {sample.shape}.")
-    return torch.tensor(sample, dtype=torch.float32).permute(1, 2, 0)
+        raise ValueError(f"{key} must be 3D or 4D, got {sample.shape}.")
+
+    if layout.startswith("T"):
+        tensor = torch.tensor(sample, dtype=torch.float32).permute(1, 2, 0)
+    else:
+        tensor = torch.tensor(sample, dtype=torch.float32)
+    return tensor, layout
 
 
-def _load_shallow_water_data(path: Path, total: int, required_steps: int, sub: int) -> torch.Tensor:
+def _load_root_shallow_water_dataset(
+    dataset: h5py.Dataset,
+    total: int,
+    required_steps: int,
+    sub: int,
+) -> tuple[torch.Tensor, str]:
+    if dataset.shape[0] < total:
+        raise ValueError(f"/data has {dataset.shape[0]} samples; need {total}.")
+
+    if dataset.ndim == 5 and dataset.shape[-1] >= 1:
+        if dataset.shape[2] == dataset.shape[3] and dataset.shape[1] >= required_steps:
+            data = dataset[:total, :required_steps, ::sub, ::sub, 0]
+            return torch.tensor(data, dtype=torch.float32).permute(0, 2, 3, 1), "B-T-X-Y-C"
+        if dataset.shape[1] == dataset.shape[2] and dataset.shape[3] >= required_steps:
+            data = dataset[:total, ::sub, ::sub, :required_steps, 0]
+            return torch.tensor(data, dtype=torch.float32), "B-X-Y-T-C"
+
+    if dataset.ndim == 4:
+        if dataset.shape[2] == dataset.shape[3] and dataset.shape[1] >= required_steps:
+            data = dataset[:total, :required_steps, ::sub, ::sub]
+            return torch.tensor(data, dtype=torch.float32).permute(0, 2, 3, 1), "B-T-X-Y"
+        if dataset.shape[1] == dataset.shape[2] and dataset.shape[-1] >= required_steps:
+            data = dataset[:total, ::sub, ::sub, :required_steps]
+            return torch.tensor(data, dtype=torch.float32), "B-X-Y-T"
+
+    raise ValueError(
+        "Root /data must have shape (B,X,Y,T), (B,T,X,Y), (B,X,Y,T,C), or (B,T,X,Y,C); "
+        f"got {dataset.shape}."
+    )
+
+
+def _load_shallow_water_data(path: Path, total: int, required_steps: int, sub: int) -> tuple[torch.Tensor, str]:
     with h5py.File(path) as handle:
         if "data" in handle and isinstance(handle["data"], h5py.Dataset):
-            dataset = handle["data"]
-            if dataset.shape[0] < total:
-                raise ValueError(f"/data has {dataset.shape[0]} samples; need {total}.")
-            if dataset.ndim == 4 and dataset.shape[-1] >= required_steps:
-                return torch.tensor(dataset[:total, ::sub, ::sub, :required_steps], dtype=torch.float32)
-            if dataset.ndim == 4 and dataset.shape[1] >= required_steps:
-                return torch.tensor(dataset[:total, :required_steps, ::sub, ::sub], dtype=torch.float32).permute(
-                    0, 2, 3, 1
-                )
-            if dataset.ndim == 5 and dataset.shape[1] >= required_steps:
-                return torch.tensor(
-                    dataset[:total, :required_steps, ::sub, ::sub, 0], dtype=torch.float32
-                ).permute(0, 2, 3, 1)
-            raise ValueError(f"Unsupported /data shape: {dataset.shape}.")
+            return _load_root_shallow_water_dataset(handle["data"], total, required_steps, sub)
 
         keys = sorted(k for k in handle.keys() if isinstance(handle[k], h5py.Group) and "data" in handle[k])
         if len(keys) < total:
             raise ValueError(f"Grouped file has {len(keys)} samples; need {total}.")
-        first = _sample_to_xy_time(handle[f"{keys[0]}/data"][:], required_steps, sub, f"{keys[0]}/data")
+        first, layout = _sample_to_xy_time(
+            handle[f"{keys[0]}/data"][:],
+            required_steps,
+            sub,
+            f"{keys[0]}/data",
+        )
         data = torch.empty((total, *first.shape), dtype=torch.float32)
         data[0] = first
         for index, key in enumerate(keys[1:total], start=1):
-            data[index] = _sample_to_xy_time(
+            sample, sample_layout = _sample_to_xy_time(
                 handle[f"{key}/data"][:], required_steps, sub, f"{key}/data"
             )
-        return data
+            if sample_layout != layout:
+                raise ValueError(f"Grouped shallow-water layouts differ: {layout} vs {sample_layout} at {key}.")
+            data[index] = sample
+        return data, f"grouped-{layout}"
 
 
 def build_shallow_water_stage3_loaders(
@@ -233,7 +302,8 @@ def build_shallow_water_stage3_loaders(
     num_workers: int = 0,
 ) -> LoaderBundle:
     total = ntrain + ntest
-    data = _load_shallow_water_data(data_path, total, t_in + t_out, sub)
+    data, source_layout = _load_shallow_water_data(data_path, total, t_in + t_out, sub)
+    _require_finite("shallow-water data", data)
     train_x = data[:ntrain, :, :, :t_in]
     train_y = data[:ntrain, :, :, t_in : t_in + t_out]
     test_x = data[-ntest:, :, :, :t_in]
@@ -267,6 +337,7 @@ def build_shallow_water_stage3_loaders(
             "dataset": "shallow_water",
             "condition_fields": ["dx", "dy", "dt", "t_in", "t_out", "sub", "radial_dam_break_flag"],
             "condition_values": condition,
+            "source_layout": source_layout,
             "train_shape": list(train_x.shape),
             "test_shape": list(test_x.shape),
         },

@@ -183,7 +183,10 @@ nohup python -u experiments/stage3_0/train_pkno_shallow_water.py \
   --operator-size 32 \
   --modes 16 \
   --decompose 8 \
-  --max-grad-norm 1.0 \
+  --dt 0.01 \
+  --lr 2e-4 \
+  --delta-scale 0.02 \
+  --max-grad-norm 0.5 \
   --device cuda \
   > "$LOG_DIR/$RUN.log" 2>&1 &
 
@@ -256,7 +259,8 @@ CUDA_VISIBLE_DEVICES=3 nohup python -u experiments/stage3_0/train_pkno_shallow_w
   --epochs 500 --batch-size 5 --t-in 10 --t-out 40 \
   --ntrain 900 --ntest 100 \
   --operator-size 32 --modes 16 --decompose 8 \
-  --lr 5e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda \
+  --dt 0.01 --lr 2e-4 --delta-scale 0.02 --max-grad-norm 0.5 \
+  --seed 42 --save-checkpoint --device cuda \
   > "$LOG_DIR/$RUN.log" 2>&1 &
 echo $!
 ```

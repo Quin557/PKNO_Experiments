@@ -16,9 +16,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sub", type=int, default=1)
     parser.add_argument("--ntrain", type=int, default=900)
     parser.add_argument("--ntest", type=int, default=100)
-    parser.add_argument("--dt", type=float, default=1.0)
+    parser.add_argument("--dt", type=float, default=0.01)
     add_common_args(parser)
-    parser.set_defaults(batch_size=5, lr=5e-4, max_grad_norm=1.0, epochs=1)
+    parser.set_defaults(
+        batch_size=5,
+        lr=2e-4,
+        max_grad_norm=0.5,
+        delta_scale=0.02,
+        epochs=1,
+        basis_kind="shallow_water",
+    )
     return parser.parse_args()
 
 

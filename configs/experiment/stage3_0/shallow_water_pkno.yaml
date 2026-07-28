@@ -21,8 +21,11 @@ default_args:
   operator_size: 32
   modes: 16
   decompose: 8
-  lr: 5.0e-4
-  max_grad_norm: 1.0
+  basis_kind: shallow_water
+  dt: 0.01
+  lr: 2.0e-4
+  delta_scale: 0.02
+  max_grad_norm: 0.5
   seed: 42
 outputs:
   - metrics.csv

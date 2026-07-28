@@ -39,6 +39,7 @@ class ParamKNOBase(nn.Module):
         decompose: int = 8,
         dictionary_hidden_dim: int = 128,
         dictionary_depth: int = 2,
+        basis_kind: str = "generic",
         decoder_hidden_dim: int = 128,
         condition_embed_dim: int = 128,
         state_embed_dim: int = 64,
@@ -63,6 +64,7 @@ class ParamKNOBase(nn.Module):
             observable_dim=observable_dim,
             hidden_dim=dictionary_hidden_dim,
             depth=dictionary_depth,
+            basis_kind=basis_kind,
         )
         self.pred_decoder = PointwiseDecoder(
             observable_dim=observable_dim,
