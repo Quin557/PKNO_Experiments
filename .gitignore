@@ -40,6 +40,7 @@ wandb/
 mlruns/
 /logs/
 /outputs/
+/queue_gpu_jobs/
 
 # Model/data binaries
 *.pt
