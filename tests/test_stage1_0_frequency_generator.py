@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import torch
 
-from amkno.frequency import AmortizedMatrixGenerator, ChebyshevFrequencyEmbedding
+from amkno.frequency import (
+    AmortizedMatrixGenerator,
+    ChebyshevFrequencyEmbedding,
+    FactorizedAmortizedMatrixGenerator2D,
+)
 from amkno.operators import AMKoopmanOperator1D, AMKoopmanOperator2D
 
 
@@ -42,6 +46,23 @@ def test_amortized_matrix_generator_state_conditioned_shape():
     assert weights.is_complex()
 
 
+def test_factorized_amortized_matrix_generator_2d_shapes():
+    generator = FactorizedAmortizedMatrixGenerator2D(
+        freq_embed_dim=5,
+        observable_dim=4,
+        rank=2,
+        hidden_dim=8,
+        depth=1,
+    )
+    freq_x = torch.randn(6, 5)
+    freq_y = torch.randn(3, 5)
+    factor_x, factor_y = generator(freq_x, freq_y)
+    assert factor_x.shape == (6, 4, 4, 2)
+    assert factor_y.shape == (3, 4, 4, 2)
+    assert factor_x.is_complex()
+    assert factor_y.is_complex()
+
+
 def test_am_koopman_1d_forward_shape_all_modes():
     op = AMKoopmanOperator1D(
         observable_dim=4,
@@ -62,6 +83,20 @@ def test_am_koopman_2d_forward_shape_capped_modes():
         frequency_basis_dim=4,
         generator_hidden_dim=8,
         generator_depth=1,
+    )
+    x = torch.randn(2, 4, 8, 8)
+    y = op(x)
+    assert y.shape == x.shape
+
+
+def test_am_koopman_2d_full_generator_forward_shape():
+    op = AMKoopmanOperator2D(
+        observable_dim=4,
+        max_modes=3,
+        frequency_basis_dim=4,
+        generator_hidden_dim=8,
+        generator_depth=1,
+        operator_factorization="full",
     )
     x = torch.randn(2, 4, 8, 8)
     y = op(x)

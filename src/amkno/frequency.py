@@ -92,3 +92,98 @@ class AmortizedMatrixGenerator(nn.Module):
         raw = self.net(torch.cat([freq_batch, cond_batch], dim=-1))
         raw = raw.reshape(batch, *freq_shape, self.observable_dim, self.observable_dim, 2)
         return self.output_scale * torch.complex(raw[..., 0], raw[..., 1])
+
+
+class AxisFactorGenerator(nn.Module):
+    """Generate one-dimensional complex factors for a separable 2D kernel.
+
+    AM-FNO's MLP implementation avoids a full MLP over every ``(kx, ky)`` pair
+    by generating x- and y-axis frequency responses separately, then combining
+    them.  This class is the AM-KNO analogue for one axis.
+    """
+
+    def __init__(
+        self,
+        freq_embed_dim: int,
+        observable_dim: int,
+        rank: int = 1,
+        hidden_dim: int = 128,
+        depth: int = 2,
+        output_scale: float = 0.05,
+        activation: type[nn.Module] = nn.GELU,
+    ) -> None:
+        super().__init__()
+        if rank <= 0:
+            raise ValueError("rank must be positive.")
+        self.observable_dim = observable_dim
+        self.rank = rank
+        self.output_scale = output_scale
+
+        layers: list[nn.Module] = []
+        current = freq_embed_dim
+        for _ in range(depth):
+            layers.append(nn.Linear(current, hidden_dim))
+            layers.append(activation())
+            current = hidden_dim
+        layers.append(nn.Linear(current, 2 * observable_dim * observable_dim * rank))
+        self.net = nn.Sequential(*layers)
+
+    def forward(self, freq_embed: torch.Tensor) -> torch.Tensor:
+        raw = self.net(freq_embed)
+        raw = raw.reshape(
+            *freq_embed.shape[:-1],
+            self.observable_dim,
+            self.observable_dim,
+            self.rank,
+            2,
+        )
+        return self.output_scale * torch.complex(raw[..., 0], raw[..., 1])
+
+
+class FactorizedAmortizedMatrixGenerator2D(nn.Module):
+    """Generate separable 2D Koopman factors ``Gx(kx)`` and ``Gy(ky)``.
+
+    The represented matrix is:
+
+    ```text
+    K(kx, ky)[i, o] = sum_r Gx(kx)[i, o, r] * Gy(ky)[i, o, r]
+    ```
+
+    Rank 1 matches the AM-FNO MLP product form most closely.  Higher ranks are
+    available as a controlled expressiveness/cost tradeoff.
+    """
+
+    def __init__(
+        self,
+        freq_embed_dim: int,
+        observable_dim: int,
+        rank: int = 1,
+        hidden_dim: int = 128,
+        depth: int = 2,
+        output_scale: float = 0.05,
+        activation: type[nn.Module] = nn.GELU,
+    ) -> None:
+        super().__init__()
+        # Split the scale between axes so the summed rank products start near output_scale.
+        axis_scale = (output_scale / max(rank, 1)) ** 0.5
+        self.x_generator = AxisFactorGenerator(
+            freq_embed_dim=freq_embed_dim,
+            observable_dim=observable_dim,
+            rank=rank,
+            hidden_dim=hidden_dim,
+            depth=depth,
+            output_scale=axis_scale,
+            activation=activation,
+        )
+        self.y_generator = AxisFactorGenerator(
+            freq_embed_dim=freq_embed_dim,
+            observable_dim=observable_dim,
+            rank=rank,
+            hidden_dim=hidden_dim,
+            depth=depth,
+            output_scale=axis_scale,
+            activation=activation,
+        )
+
+    def forward(self, freq_x_embed: torch.Tensor, freq_y_embed: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        return self.x_generator(freq_x_embed), self.y_generator(freq_y_embed)

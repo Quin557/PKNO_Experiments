@@ -13,6 +13,8 @@ default_args:
   max_modes: 0
   frequency_basis_dim: 32
   condition_mode: freq
+  operator_factorization: factorized
+  factorized_rank: 1
   lr: 1.0e-3
   seed: 42
 outputs:

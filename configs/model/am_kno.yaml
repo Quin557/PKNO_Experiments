@@ -8,10 +8,13 @@ operator:
   type: amortized_frequency_generated_koopman
   default_generator: mlp_chebyshev
   default_condition_mode: freq
+  default_2d_factorization: factorized
   variants:
     freq: "K_k = G_phi(e(k))"
-    state: "K_k = G_phi(e(k), S_theta(history))"
-    state_static: "K_k = G_phi(e(k), S_theta(history), c_static)"
+    factorized_2d: "K_(kx,ky) = combine(Gx_phi(e(kx)), Gy_phi(e(ky)))"
+  ablation_variants:
+    state_full_2d: "K_k = G_phi(e(k), S_theta(history)); use --operator-factorization full"
+    state_static_full_2d: "K_k = G_phi(e(k), S_theta(history), c_static); use --operator-factorization full"
 mode_policy:
   default_max_modes: 0
   meaning: "0 means use all FFT modes available at the current grid resolution."
@@ -22,9 +25,13 @@ defaults:
   frequency_basis_dim: 32
   generator_hidden_dim: 128
   generator_depth: 2
+  operator_factorization: factorized
+  factorized_rank: 1
   output_scale: 0.05
   use_hf_residual: false
 notes:
   - "Default implementation follows AM-FNO's MLP plus orthogonal/Chebyshev basis idea."
+  - "Stage1_0 defaults to pure frequency conditioning; current-state conditioning is deferred to later PKNO/Stage3 experiments."
+  - "2D defaults use factorized Gx(kx), Gy(ky), closer to AM-FNO MLP and cheaper than full G(kx, ky)."
   - "KAN is not enabled in Stage1_0 by default because it adds a heavy dependency and a separate stability variable."
   - "If AM-KNO proves useful, integration into PKNO should be a later stage, not part of this standalone trial."

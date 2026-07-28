@@ -15,7 +15,9 @@ default_args:
   decompose: 8
   max_modes: 0
   frequency_basis_dim: 32
-  condition_mode: state
+  condition_mode: freq
+  operator_factorization: factorized
+  factorized_rank: 1
   output_scale: 0.02
   lr: 3.0e-4
   max_grad_norm: 1.0

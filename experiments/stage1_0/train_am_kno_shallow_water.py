@@ -23,7 +23,7 @@ def parse_args() -> argparse.Namespace:
         lr=2e-4,
         max_grad_norm=0.5,
         epochs=1,
-        condition_mode="state",
+        condition_mode="freq",
         frequency_basis_dim=32,
         output_scale=0.015,
         max_modes=0,

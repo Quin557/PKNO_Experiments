@@ -67,6 +67,22 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--generator-hidden-dim", type=int, default=128)
     parser.add_argument("--generator-depth", type=int, default=2)
     parser.add_argument("--output-scale", type=float, default=0.05)
+    parser.add_argument(
+        "--operator-factorization",
+        type=str,
+        default="factorized",
+        choices=["factorized", "full"],
+        help=(
+            "2D AM generator type. 'factorized' uses AM-FNO-style Gx(kx), Gy(ky) and is "
+            "frequency-only; 'full' uses G(kx,ky) and supports state-conditioned ablations."
+        ),
+    )
+    parser.add_argument(
+        "--factorized-rank",
+        type=int,
+        default=1,
+        help="Rank for factorized 2D AM generator. Rank 1 is closest to AM-FNO MLP.",
+    )
     parser.add_argument("--max-grad-norm", type=float, default=None)
     parser.add_argument("--use-hf-residual", action="store_true")
     parser.add_argument("--hf-hidden-dim", type=int, default=32)
@@ -100,6 +116,8 @@ def build_model(args: argparse.Namespace, bundle: LoaderBundle) -> torch.nn.Modu
         generator_hidden_dim=args.generator_hidden_dim,
         generator_depth=args.generator_depth,
         output_scale=args.output_scale,
+        operator_factorization=args.operator_factorization,
+        factorized_rank=args.factorized_rank,
         use_hf_residual=args.use_hf_residual,
         hf_hidden_dim=args.hf_hidden_dim,
         hf_residual_scale=args.hf_residual_scale,
@@ -123,6 +141,7 @@ def run_stage1_training(args: argparse.Namespace, bundle: LoaderBundle) -> None:
     config["spatial_dim"] = bundle.spatial_dim
     config["t_out_resolved"] = bundle.t_out
     config["mode_policy"] = "all_fft_modes" if args.max_modes <= 0 else "compute_capped"
+    config["stage1_0_default_rule"] = "pure_frequency_am" if args.condition_mode == "freq" else "state_ablation"
     write_json(out_dir / "args.json", config)
     (out_dir / "config.yaml").write_text(
         yaml.safe_dump(to_builtin(config), sort_keys=True),
