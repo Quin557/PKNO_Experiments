@@ -1,0 +1,40 @@
+experiment: stage4_0_shallow_water_am_pkno
+stage: stage4_0_am_pkno
+script: experiments/stage4_0/train_am_pkno_shallow_water.py
+dataset: shallow_water
+data_env: SHALLOW_WATER_FILE
+condition_fields:
+  - dx
+  - dy
+  - dt
+  - t_in
+  - t_out
+  - sub
+  - radial_dam_break_flag
+default_args:
+  epochs: 500
+  batch_size: 5
+  t_in: 10
+  t_out: 40
+  ntrain: 900
+  ntest: 100
+  dt: 0.01
+  operator_size: 32
+  decompose: 4
+  max_modes: 0
+  frequency_basis_dim: 32
+  basis_kind: shallow_water
+  operator_factorization: factorized
+  factorized_rank: 1
+  generator_hidden_dim: 128
+  generator_depth: 2
+  output_scale: 0.005
+  lr: 5.0e-5
+  max_grad_norm: 0.1
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt

@@ -1,0 +1,75 @@
+from __future__ import annotations
+
+import torch
+
+from ampkno.frequency import ConditionedFactorizedMatrixGenerator2D, ConditionedMatrixGenerator
+from ampkno.operators import AMParamKoopmanOperator2D
+
+
+def test_conditioned_matrix_generator_shape():
+    generator = ConditionedMatrixGenerator(
+        freq_embed_dim=5,
+        condition_embed_dim=6,
+        observable_dim=4,
+        hidden_dim=8,
+        depth=1,
+    )
+    freq_embed = torch.randn(3, 2, 5)
+    condition = torch.randn(2, 6)
+    weights = generator(freq_embed, condition)
+    assert weights.shape == (2, 3, 2, 4, 4)
+    assert weights.is_complex()
+
+
+def test_conditioned_factorized_generator_2d_shapes():
+    generator = ConditionedFactorizedMatrixGenerator2D(
+        freq_embed_dim=5,
+        condition_embed_dim=6,
+        observable_dim=4,
+        rank=2,
+        hidden_dim=8,
+        depth=1,
+    )
+    freq_x = torch.randn(7, 5)
+    freq_y = torch.randn(4, 5)
+    condition = torch.randn(2, 6)
+    factor_x, factor_y = generator(freq_x, freq_y, condition)
+    assert factor_x.shape == (2, 7, 4, 4, 2)
+    assert factor_y.shape == (2, 4, 4, 4, 2)
+    assert factor_x.is_complex()
+    assert factor_y.is_complex()
+
+
+def test_am_param_koopman_2d_factorized_forward_shape():
+    op = AMParamKoopmanOperator2D(
+        observable_dim=4,
+        max_modes=3,
+        frequency_basis_dim=4,
+        condition_embed_dim=6,
+        generator_hidden_dim=8,
+        generator_depth=1,
+        operator_factorization="factorized",
+        factorized_rank=2,
+    )
+    x = torch.randn(2, 4, 8, 8)
+    condition = torch.randn(2, 6)
+    y = op(x, condition)
+    assert y.shape == x.shape
+    assert torch.isfinite(y).all()
+
+
+def test_am_param_koopman_2d_full_forward_shape():
+    op = AMParamKoopmanOperator2D(
+        observable_dim=4,
+        max_modes=3,
+        frequency_basis_dim=4,
+        condition_embed_dim=6,
+        generator_hidden_dim=8,
+        generator_depth=1,
+        operator_factorization="full",
+    )
+    x = torch.randn(2, 4, 8, 8)
+    condition = torch.randn(2, 6)
+    y = op(x, condition)
+    assert y.shape == x.shape
+    assert torch.isfinite(y).all()

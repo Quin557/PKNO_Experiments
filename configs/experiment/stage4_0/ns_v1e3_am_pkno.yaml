@@ -1,0 +1,39 @@
+experiment: stage4_0_ns_v1e3_am_pkno
+stage: stage4_0_am_pkno
+script: experiments/stage4_0/train_am_pkno_ns_v1e3.py
+dataset: navier_stokes_v1e3
+data_env: NS2D_V1E3_FILE
+condition_fields:
+  - log10_viscosity
+  - dx
+  - dy
+  - dt
+  - t_in
+  - t_out
+  - sub
+default_args:
+  epochs: 500
+  batch_size: 10
+  t_in: 10
+  t_out: 40
+  ntrain: 1000
+  ntest: 200
+  operator_size: 32
+  decompose: 8
+  max_modes: 0
+  frequency_basis_dim: 32
+  basis_kind: navier_stokes
+  operator_factorization: factorized
+  factorized_rank: 1
+  generator_hidden_dim: 128
+  generator_depth: 2
+  output_scale: 0.015
+  lr: 5.0e-4
+  max_grad_norm: 1.0
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt

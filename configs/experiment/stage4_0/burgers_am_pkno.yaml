@@ -1,0 +1,32 @@
+experiment: stage4_0_burgers_am_pkno
+stage: stage4_0_am_pkno
+script: experiments/stage4_0/train_am_pkno_burgers.py
+dataset: burgers
+data_env: BURGERS_FILE
+condition_fields:
+  - log10_reynolds
+  - dx
+  - sub
+  - is_periodic
+default_args:
+  epochs: 500
+  batch_size: 64
+  sub: 32
+  ntrain: 1000
+  ntest: 200
+  operator_size: 32
+  decompose: 8
+  max_modes: 0
+  frequency_basis_dim: 32
+  basis_kind: burgers
+  generator_hidden_dim: 128
+  generator_depth: 2
+  output_scale: 0.02
+  lr: 1.0e-3
+  seed: 42
+outputs:
+  - metrics.csv
+  - rollout_error_by_step.csv
+  - spectral_metrics.csv
+  - config.yaml
+  - env.txt
