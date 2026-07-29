@@ -114,13 +114,15 @@ grep -n "STAGE4_OOM_FIX_MEMORY_EFFICIENT_CONTRACTION" src/ampkno/operators.py
 
 如果没有匹配结果，先不要继续跑 Stage4_0 full run。
 
-这三个 2D 实验当前改成关闭 Koopman update activation checkpoint：
+这三个 2D 实验必须保留 Koopman update activation checkpoint：
 
 ```text
---no-checkpoint-koopman
+checkpoint_koopman=true
 ```
 
-如果后续显存很宽裕、又想回到省显存换速度的模式，再去掉这个参数。
+原因很直接：`t_out=40` 和 `decompose=8` 会展开成 `40 * 8 = 320` 次 Koopman update。关掉 checkpoint 后，autograd 会把整条 rollout 图都留住，显存会直接爆。当前 guide 里的 2D 主实验都以“能跑完”为第一目标，checkpoint 不是可选优化，而是必要条件。
+
+如果后续想做速度对照，可以另起小规模消融，把 `decompose` 降低后再尝试关掉 checkpoint；主实验这里不要关。
 
 2D factorized all-frequency 默认还会使用 chunked contraction：
 
@@ -194,7 +196,6 @@ nohup python -u experiments/stage4_0/train_am_pkno_ns_v1e3.py \
   --operator-factorization factorized \
   --factorized-rank 1 \
   --factorized-input-chunk 16 \
-  --no-checkpoint-koopman \
   --output-scale 0.015 \
   --lr 5e-4 \
   --max-grad-norm 1.0 \
@@ -232,7 +233,6 @@ nohup python -u experiments/stage4_0/train_am_pkno_ns_v1e4.py \
   --operator-factorization factorized \
   --factorized-rank 1 \
   --factorized-input-chunk 16 \
-  --no-checkpoint-koopman \
   --output-scale 0.01 \
   --lr 3e-4 \
   --max-grad-norm 1.0 \
@@ -271,7 +271,6 @@ nohup python -u experiments/stage4_0/train_am_pkno_shallow_water.py \
   --operator-factorization factorized \
   --factorized-rank 1 \
   --factorized-input-chunk 8 \
-  --no-checkpoint-koopman \
   --output-scale 0.005 \
   --lr 5e-5 \
   --max-grad-norm 0.1 \
@@ -320,7 +319,6 @@ CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/stage4_0/train_am_pkno_ns_v1e
   --operator-size 32 --decompose 8 --max-modes 0 \
   --operator-factorization factorized --factorized-rank 1 \
   --factorized-input-chunk 16 \
-  --no-checkpoint-koopman \
   --output-scale 0.015 --lr 5e-4 --max-grad-norm 1.0 \
   --seed 42 --save-checkpoint --device cuda \
   > "$LOG_DIR/$RUN.log" 2>&1 &
@@ -339,7 +337,6 @@ CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/stage4_0/train_am_pkno_ns_v1e
   --operator-size 32 --decompose 8 --max-modes 0 \
   --operator-factorization factorized --factorized-rank 1 \
   --factorized-input-chunk 16 \
-  --no-checkpoint-koopman \
   --output-scale 0.01 --lr 3e-4 --max-grad-norm 1.0 \
   --seed 42 --save-checkpoint --device cuda \
   > "$LOG_DIR/$RUN.log" 2>&1 &
@@ -358,7 +355,6 @@ CUDA_VISIBLE_DEVICES=3 nohup python -u experiments/stage4_0/train_am_pkno_shallo
   --operator-size 32 --decompose 4 --max-modes 0 \
   --operator-factorization factorized --factorized-rank 1 \
   --factorized-input-chunk 8 \
-  --no-checkpoint-koopman \
   --output-scale 0.005 --lr 5e-5 --max-grad-norm 0.1 \
   --seed 42 --save-checkpoint --device cuda \
   > "$LOG_DIR/$RUN.log" 2>&1 &

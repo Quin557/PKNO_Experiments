@@ -254,11 +254,7 @@ checkpoint_koopman = true
 
 原因是 autoregressive training 会展开 `t_out * decompose` 次 Koopman update。checkpoint 会在 backward 时重算 operator forward，减少保存的中间激活。代价是训练更慢，但比单纯降低 batch size 或直接截断频率更符合 Stage4_0 要验证 all-frequency AM-PKNO 的目标。
 
-如果后续确认某张 GPU 显存充足、希望换速度，可以在训练命令中加：
-
-```text
---no-checkpoint-koopman
-```
+如果后续要做速度/显存消融，再单独写一组小规模对照；主线实验不要关 checkpoint。
 
 ## 5. Shape 约定
 
