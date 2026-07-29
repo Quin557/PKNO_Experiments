@@ -4,7 +4,8 @@
 
 Stage 1 使用 all-frequency、frequency-to-matrix generator 替换 KNO 的独立
 mode-indexed 矩阵，但不使用当前物理条件或状态摘要对 Koopman 矩阵进行
-动态调制。本报告分析当前已经完成的三个 500-epoch 实验。
+动态调制。本报告分析当前已经完成的三个 500-epoch 实验，并与上一阶段
+KNO 对比。
 
 ## 1. 运行与来源
 

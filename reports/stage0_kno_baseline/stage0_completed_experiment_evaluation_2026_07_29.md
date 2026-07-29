@@ -69,7 +69,7 @@ baseline。由于 wrapper 未导出与后续 PyTorch 实现一致的 relative L2
 
 完整复跑的最终 mean-step MSE 为 `6.913e-5`。此前被服务器中断的部分
 运行只用于说明优化过程未明显发散，现已由该完整结果替代。该 KNO 结果是
-后续 Param-KNO shallow-water 比较的 MSE baseline；relative L2 仍缺失。
+该结果可作为 shallow-water 的 KNO MSE baseline；relative L2 仍缺失。
 
 ## 4. 可用于论文的结论
 

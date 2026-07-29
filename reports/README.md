@@ -12,10 +12,10 @@
 | Stage 0 | `stage0_kno_baseline/stage0_completed_experiment_evaluation_2026_07_29.md` | 已完成 KNO 结果分析 |
 | Stage 0 | `stage0_kno_baseline/burgers_baseline_evaluation.md` | Burgers 单项详细评估 |
 | Stage 1 | `stage1_0_am_kno/stage1_completed_experiment_evaluation_2026_07_29.md` | 已完成 AM-KNO 结果分析 |
-| Stage 3 | `stage3_0_param_kno/stage3_completed_experiment_evaluation_2026_07_29.md` | 已完成 Param-KNO 结果及诊断分析 |
-| Stage 4 | `stage4_0_am_pkno/stage4_completed_experiment_evaluation_2026_07_29.md` | 当前已完成 PKNO/Burgers 分析 |
+| Stage 3 | `stage3_0_param_kno/stage3_pkno_completed_experiment_evaluation_2026_07_29.md` | PKNO 对 KNO、AM-KNO 的阶段性比较 |
 
-Stage 2 高频分支已不在当前实验计划中，因此不创建 Stage 2 结果报告。
+当前论文实验链条为 KNO、AM-KNO、PKNO（内部 Stage 0/1/3）。不属于
+该链条的原始 run 只保留在机器清单中用于追溯，不创建当前论文结果报告。
 
 ## 更新规则
 
