@@ -1,0 +1,10 @@
+[2026-07-28 12:28:35] Waiting for PID 364522 on cuda1
+Expected text: kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_lr001_seed42_rerun1
+[2026-07-28 14:41:36] Target PID finished. Checking cuda1 idle state.
+[2026-07-28 14:41:36] cuda1 idle check 1/5
+[2026-07-28 14:42:36] cuda1 idle check 2/5
+[2026-07-28 14:43:36] cuda1 idle check 3/5
+[2026-07-28 14:44:36] cuda1 idle check 4/5
+[2026-07-28 14:45:36] cuda1 idle check 5/5
+[2026-07-28 14:46:36] cuda1 appears idle. Starting queue_gpu_jobs/job_cuda1_after_364522.sh
+666609

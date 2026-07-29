@@ -1,0 +1,10 @@
+[2026-07-28 12:28:35] Waiting for PID 372306 on cuda0
+Expected text: kno_koopmanlab_ns_v1e4_o32_m16_r8_t40_ep500_lr001_seed42_rerun1
+[2026-07-28 14:33:36] Target PID finished. Checking cuda0 idle state.
+[2026-07-28 14:33:36] cuda0 idle check 1/5
+[2026-07-28 14:34:36] cuda0 idle check 2/5
+[2026-07-28 14:35:36] cuda0 idle check 3/5
+[2026-07-28 14:36:36] cuda0 idle check 4/5
+[2026-07-28 14:37:36] cuda0 idle check 5/5
+[2026-07-28 14:38:36] cuda0 appears idle. Starting queue_gpu_jobs/job_cuda0_after_372306.sh
+663069

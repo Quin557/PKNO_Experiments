@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/experiments/stage4_0/train_am_pkno_ns_v1e4.py", line 52, in <module>
+    main()
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/experiments/stage4_0/train_am_pkno_ns_v1e4.py", line 48, in main
+    run_stage4_training(args, bundle)
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/experiments/stage4_0/common.py", line 159, in run_stage4_training
+    train_autoregressive(
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/pkno/trainers/train_rollout.py", line 301, in train_autoregressive
+    out = rollout_model(
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/pkno/trainers/train_rollout.py", line 148, in rollout_model
+    pred_step, recon = model(history, condition)
+  File "/home/lpq/anaconda3/envs/pkno-exp/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/lpq/anaconda3/envs/pkno-exp/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/ampkno/models.py", line 156, in forward
+    dz = self.koopman_layer(z, condition_embed, weights=weights)
+  File "/home/lpq/anaconda3/envs/pkno-exp/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/lpq/anaconda3/envs/pkno-exp/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/ampkno/operators.py", line 219, in forward
+    self._time_march_factorized(selected, weights)
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/ampkno/operators.py", line 142, in _time_march_factorized
+    return torch.einsum("bixy,bxior,byior->boxy", x_ft, factor_x, factor_y)
+  File "/home/lpq/anaconda3/envs/pkno-exp/lib/python3.10/site-packages/torch/functional.py", line 402, in einsum
+    return _VF.einsum(equation, operands)  # type: ignore[attr-defined]
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 166.00 MiB. GPU 0 has a total capacity of 47.54 GiB of which 145.00 MiB is free. Including non-PyTorch memory, this process has 47.38 GiB memory in use. Of the allocated memory 46.98 GiB is allocated by PyTorch, and 84.95 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

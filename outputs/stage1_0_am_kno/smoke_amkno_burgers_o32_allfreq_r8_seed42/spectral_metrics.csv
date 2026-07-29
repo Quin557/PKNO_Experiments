@@ -1,0 +1,6 @@
+metric,value
+low_band_spectral_rel_l2,4.06747401e-01
+mid_band_spectral_rel_l2,3.30135417e+00
+high_band_spectral_rel_l2,5.32688416e+02
+high_frequency_energy_ratio_error,1.95144767e-09
+gradient_rel_l2,7.42806911e-01

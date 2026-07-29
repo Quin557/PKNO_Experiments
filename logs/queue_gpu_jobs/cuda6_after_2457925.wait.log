@@ -1,0 +1,10 @@
+[2026-07-28 12:28:35] Waiting for PID 2457925 on cuda6
+Expected text: amkno_ns_v1e3_o32_allfreq_fact1_r8_t40_ep500_seed42
+[2026-07-28 12:53:35] Target PID finished. Checking cuda6 idle state.
+[2026-07-28 12:53:35] cuda6 idle check 1/5
+[2026-07-28 12:54:35] cuda6 idle check 2/5
+[2026-07-28 12:55:35] cuda6 idle check 3/5
+[2026-07-28 12:56:35] cuda6 idle check 4/5
+[2026-07-28 12:57:35] cuda6 idle check 5/5
+[2026-07-28 12:58:35] cuda6 appears idle. Starting queue_gpu_jobs/job_cuda6_after_2457925.sh
+616873

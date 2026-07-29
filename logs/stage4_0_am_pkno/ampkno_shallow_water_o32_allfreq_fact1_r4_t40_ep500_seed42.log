@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/experiments/stage4_0/train_am_pkno_shallow_water.py", line 52, in <module>
+    main()
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/experiments/stage4_0/train_am_pkno_shallow_water.py", line 48, in main
+    run_stage4_training(args, bundle)
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/experiments/stage4_0/common.py", line 159, in run_stage4_training
+    train_autoregressive(
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/pkno/trainers/train_rollout.py", line 301, in train_autoregressive
+    out = rollout_model(
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/pkno/trainers/train_rollout.py", line 148, in rollout_model
+    pred_step, recon = model(history, condition)
+  File "/home/lpq/anaconda3/envs/pkno-exp/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/lpq/anaconda3/envs/pkno-exp/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/ampkno/models.py", line 154, in forward
+    weights = self.koopman_layer.make_weights(z, condition_embed)
+  File "/home/lpq/Wangwanqi/PKNO_Experiments/src/ampkno/operators.py", line 188, in make_weights
+    x_ft = torch.fft.rfft2(x)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 12.00 MiB. GPU 0 has a total capacity of 47.54 GiB of which 3.00 MiB is free. Including non-PyTorch memory, this process has 47.52 GiB memory in use. Of the allocated memory 47.03 GiB is allocated by PyTorch, and 176.76 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
