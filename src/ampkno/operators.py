@@ -146,6 +146,7 @@ class AMParamKoopmanOperator2D(nn.Module):
         if factor_x.shape[-1] != factor_y.shape[-1]:
             raise ValueError("x/y factorized weights disagree on rank.")
 
+        # STAGE4_OOM_FIX_MEMORY_EFFICIENT_CONTRACTION:
         # A direct three-operand einsum,
         #   "bixy,bxior,byior->boxy",
         # lets PyTorch materialize a [B, X, Y, I, O, R]-scale intermediate on

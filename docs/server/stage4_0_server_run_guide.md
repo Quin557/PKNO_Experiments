@@ -109,7 +109,7 @@ einsum("bixy,bxior,byior->boxy")
 
 ```bash
 git pull origin main
-grep -n "memory-efficient contraction" -n src/ampkno/operators.py
+grep -n "STAGE4_OOM_FIX_MEMORY_EFFICIENT_CONTRACTION" src/ampkno/operators.py
 ```
 
 如果没有匹配结果，先不要继续跑 Stage4_0 full run。
