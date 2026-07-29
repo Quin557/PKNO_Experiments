@@ -1,16 +1,11 @@
 # Stage 0 KNO Update Log
 
-更新时间：2026-07-29
+更新日期：2026-07-29
 
 ## 本轮新增
 
-- `experiments/official_kno/checkpoint_utils.py`
-- `scripts/stage0_checkpoint_inventory.py`
-- `experiments/official_kno/evaluate_koopmanlab_checkpoint.py`
+- `experiments/official_kno/stage0_kno_metrics.py`
 - `docs/server/stage0_kno_server_run_guide.md`
-- `reports/stage0_kno_baseline/checkpoint_inventory.md`
-- `reports/stage0_kno_baseline/stage0_kno_evaluation_report.md`
-- `reports/stage0_kno_baseline/update_log.md`
 
 ## 本轮修改
 
@@ -20,17 +15,15 @@
 
 ## 说明
 
-1. 三个 Stage 0 训练入口现在会在训练完成后保存 `checkpoint_last.pt`。
-2. checkpoint 必须包含 `model_state_dict` 和 `optimizer_state_dict`。
-3. 新增独立 evaluation-only 入口，后续追加指标时不需要重新训练。
-4. 新增 Stage 0 专用 server guide，完整命令已从总 checklist 拆分出去。
-5. 当前 Stage 0 outputs 中还没有可加载 checkpoint，因此本轮只完成检查与工具链准备，没有启动长时间重训。
+1. 三个 Stage 0 训练入口现在都会在训练结束后直接调用统一评估模块。  
+2. 同一个 run 目录里会自动生成 `checkpoint_last.pt`、`metrics.csv`、`rollout_error_by_step.csv`、`spectral_metrics.csv`、`complexity.csv`、`evaluation_summary.json`。  
+3. Stage 0 server guide 已改成单命令训练+自动落盘的流程，默认不再要求手工补跑 evaluation-only。  
+4. 本轮只处理 Stage 0 KNO baseline，没有修改 AM-KNO、Param-KNO 或 Stage 4。
 
-## 结果可追溯路径
+## 结果路径
 
 ```text
-reports/stage0_kno_baseline/checkpoint_inventory.md
-reports/stage0_kno_baseline/stage0_kno_evaluation_report.md
 outputs/stage0_kno_baseline/<run_name>/
 logs/stage0_kno_baseline/<run_name>.log
+reports/stage0_kno_baseline/checkpoint_inventory.md
 ```

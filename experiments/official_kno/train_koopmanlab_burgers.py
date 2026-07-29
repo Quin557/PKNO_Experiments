@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import os
 import platform
@@ -13,6 +12,7 @@ import torch
 import yaml
 
 from checkpoint_utils import save_checkpoint_last
+from stage0_kno_metrics import evaluate_official_kno_model, save_stage0_outputs
 
 
 def parse_args() -> argparse.Namespace:
@@ -103,7 +103,6 @@ def main() -> None:
     model.compile()
     model.opt_init("Adam", lr=args.lr, step_size=args.step_size, gamma=args.gamma)
     model.train_single(epochs=args.epochs, trainloader=train_loader, evalloader=test_loader)
-    test_mse = float(model.test_single(test_loader))
     save_checkpoint_last(
         out_dir / "checkpoint_last.pt",
         model=model,
@@ -113,17 +112,26 @@ def main() -> None:
         seed=args.seed,
     )
 
-    with (out_dir / "metrics.csv").open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["epoch", "test_mse", "params", "source"])
-        writer.writeheader()
-        writer.writerow(
-            {
-                "epoch": args.epochs,
-                "test_mse": test_mse,
-                "params": model.params,
-                "source": "official_koopmanlab_wrapper",
-            }
-        )
+    result = evaluate_official_kno_model(
+        model.kernel,
+        test_loader,
+        device=device,
+        dataset="burgers",
+        t_out=1,
+        viscosity="",
+        run_name=args.run_name,
+        seed=args.seed,
+        epoch=args.epochs,
+    )
+    save_stage0_outputs(out_dir, result)
+    time_error = torch.tensor(
+        [[row["mse"]] for row in result["step_rows"]],
+        dtype=torch.float32,
+    )
+    torch.save(
+        {"time_error": time_error, "params": result["summary"]["params"]},
+        out_dir / "time_error.pt",
+    )
 
 
 if __name__ == "__main__":

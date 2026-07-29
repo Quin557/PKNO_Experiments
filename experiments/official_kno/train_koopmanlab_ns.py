@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import os
 import platform
@@ -15,7 +14,7 @@ import torch
 import yaml
 
 from checkpoint_utils import save_checkpoint_last
-from koopmanlab_utils import koopmanlab_optional_output_flag
+from stage0_kno_metrics import evaluate_official_kno_model, save_stage0_outputs
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,7 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--koopmanlab-root", type=Path, default=Path("external/KoopmanLab"))
     parser.add_argument("--data-path", type=Path, required=True)
     parser.add_argument("--run-name", type=str, required=True)
-    parser.add_argument("--output-dir", type=Path, default=Path("outputs"))
+    parser.add_argument("--output-dir", type=Path, default=Path("outputs/stage0_kno_baseline"))
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--batch-size", type=int, default=10)
@@ -190,38 +189,24 @@ def main() -> None:
         seed=args.seed,
     )
 
-    time_error = model.test(
+    result = evaluate_official_kno_model(
+        model.kernel,
         test_loader,
-        T_out=args.t_out,
-        path=str(fig_dir) + "/",
-        is_save=koopmanlab_optional_output_flag(args.save_plots),
-        is_plot=koopmanlab_optional_output_flag(args.save_plots),
+        device=device,
+        dataset="navier_stokes",
+        t_out=args.t_out,
+        viscosity=args.viscosity_type,
+        run_name=args.run_name,
+        seed=args.seed,
+        epoch=args.epochs,
     )
-
-    with (out_dir / "rollout_error_by_step.csv").open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["step", "mse"])
-        writer.writeheader()
-        for step, value in enumerate(time_error.reshape(-1).detach().cpu().tolist()):
-            writer.writerow({"step": step, "mse": value})
-
-    final_mse = float(time_error.mean().item())
-    with (out_dir / "metrics.csv").open("w", newline="") as f:
-        writer = csv.DictWriter(
-            f,
-            fieldnames=["epoch", "rollout_mse_mean", "params", "source"],
-        )
-        writer.writeheader()
-        writer.writerow(
-            {
-                "epoch": args.epochs,
-                "rollout_mse_mean": final_mse,
-                "params": model.params,
-                "source": "official_koopmanlab_wrapper",
-            }
-        )
-
+    save_stage0_outputs(out_dir, result)
+    time_error = torch.tensor(
+        [[row["mse"]] for row in result["step_rows"]],
+        dtype=torch.float32,
+    )
     torch.save(
-        {"time_error": time_error, "params": model.params},
+        {"time_error": time_error, "params": result["summary"]["params"]},
         out_dir / "time_error.pt",
     )
 
