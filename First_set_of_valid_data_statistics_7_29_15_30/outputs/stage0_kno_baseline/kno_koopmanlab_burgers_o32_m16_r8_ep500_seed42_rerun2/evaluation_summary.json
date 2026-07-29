@@ -1,0 +1,32 @@
+{
+  "dataset": "burgers",
+  "epoch": 500,
+  "full_rollout_rel_l2": 0.007886956483125686,
+  "inference_ms_per_step": 2.107596099813236,
+  "model": "official_koopmanlab_kno",
+  "params": 33921,
+  "peak_memory_gb": 0.032236576080322266,
+  "rollout_growth_slope": 0.0,
+  "rollout_ms": 2.107596099813236,
+  "rollout_slope_fit_end": 0,
+  "rollout_slope_fit_start": 0,
+  "run_name": "kno_koopmanlab_burgers_o32_m16_r8_ep500_seed42_rerun2",
+  "seed": 42,
+  "spectral_band_config": {
+    "high": [
+      0.66,
+      1.01
+    ],
+    "low": [
+      0.0,
+      0.33
+    ],
+    "mid": [
+      0.33,
+      0.66
+    ]
+  },
+  "step_rel_l2": 0.007886957377195358,
+  "test_mse": 2.3110313341021536e-05,
+  "viscosity": ""
+}

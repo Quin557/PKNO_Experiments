@@ -1,0 +1,18 @@
+{
+  "batch_size": 64,
+  "data_path": "/home/lpq/Wangwanqi/PKNO_Experiments/data/burgers/burgers_data_R10.mat",
+  "decompose": 8,
+  "device": "cuda",
+  "device_resolved": "cuda",
+  "epochs": 500,
+  "gamma": 0.5,
+  "koopmanlab_root": "external/KoopmanLab",
+  "lr": 0.001,
+  "modes": 16,
+  "operator_size": 32,
+  "output_dir": "outputs/stage0_kno_baseline",
+  "run_name": "kno_koopmanlab_burgers_o32_m16_r8_ep500_seed42",
+  "seed": 42,
+  "step_size": 100,
+  "sub": 32
+}
