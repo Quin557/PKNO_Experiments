@@ -1,6 +1,7 @@
 {
   "basis_kind": "burgers",
   "batch_size": 64,
+  "checkpoint_koopman": true,
   "condition_dim": 4,
   "condition_embed_dim": 128,
   "data_path": "/home/lpq/Wangwanqi/PKNO_Experiments/data/burgers/burgers_data_R10.mat",
@@ -35,6 +36,7 @@
   "dictionary_depth": 2,
   "dictionary_hidden_dim": 128,
   "epochs": 500,
+  "factorized_input_chunk": 4,
   "factorized_rank": 1,
   "frequency_basis_dim": 32,
   "gamma": 0.5,
