@@ -241,7 +241,7 @@ for r in rank:
 默认：
 
 ```text
-factorized_input_chunk = 4
+factorized_input_chunk = 32
 ```
 
 这比逐 observable Python 循环更快，同时仍避免 materialize 完整 batch-specific 2D Koopman matrix。
@@ -328,7 +328,7 @@ decompose=8
 max_modes=0
 operator_factorization=factorized
 factorized_rank=1
-factorized_input_chunk=4
+factorized_input_chunk=32
 lr=5e-4
 output_scale=0.015
 max_grad_norm=1.0
@@ -347,7 +347,7 @@ decompose=8
 max_modes=0
 operator_factorization=factorized
 factorized_rank=1
-factorized_input_chunk=4
+factorized_input_chunk=32
 lr=3e-4
 output_scale=0.01
 max_grad_norm=1.0
@@ -369,7 +369,7 @@ decompose=4
 max_modes=0
 operator_factorization=factorized
 factorized_rank=1
-factorized_input_chunk=4
+factorized_input_chunk=32
 lr=5e-5
 output_scale=0.005
 max_grad_norm=0.1

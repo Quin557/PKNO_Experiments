@@ -127,11 +127,11 @@ checkpoint_koopman=true
 2D factorized all-frequency 默认还会使用 chunked contraction：
 
 ```text
-NS:            --factorized-input-chunk 16
-Shallow-water: --factorized-input-chunk 8
+NS:            --factorized-input-chunk 32
+Shallow-water: --factorized-input-chunk 32
 ```
 
-这个参数不改变模型公式，只控制实现里一次处理多少个 observable input。chunk 越大通常越快但更占显存；如果仍 OOM，优先降低到 `--factorized-input-chunk 4` 或 `2`，而不是直接把 `--max-modes 0` 改成 `16`。
+这个参数不改变模型公式，只控制实现里一次处理多少个 observable input。你已经实测 `chunk32` 时显存最多只到约 40%，所以主线就固定用 `32`。如果以后换到更小显存的机器，才往下退到 `16` 或 `8`，而不是先动 `--max-modes 0`。
 
 ## 6. Smoke Tests
 
@@ -195,7 +195,7 @@ nohup python -u experiments/stage4_0/train_am_pkno_ns_v1e3.py \
   --max-modes 0 \
   --operator-factorization factorized \
   --factorized-rank 1 \
-  --factorized-input-chunk 16 \
+  --factorized-input-chunk 32 \
   --output-scale 0.015 \
   --lr 5e-4 \
   --max-grad-norm 1.0 \
@@ -232,7 +232,7 @@ nohup python -u experiments/stage4_0/train_am_pkno_ns_v1e4.py \
   --max-modes 0 \
   --operator-factorization factorized \
   --factorized-rank 1 \
-  --factorized-input-chunk 16 \
+  --factorized-input-chunk 32 \
   --output-scale 0.01 \
   --lr 3e-4 \
   --max-grad-norm 1.0 \
@@ -270,7 +270,7 @@ nohup python -u experiments/stage4_0/train_am_pkno_shallow_water.py \
   --max-modes 0 \
   --operator-factorization factorized \
   --factorized-rank 1 \
-  --factorized-input-chunk 8 \
+  --factorized-input-chunk 32 \
   --output-scale 0.005 \
   --lr 5e-5 \
   --max-grad-norm 0.1 \
@@ -318,7 +318,7 @@ CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/stage4_0/train_am_pkno_ns_v1e
   --ntrain 1000 --ntest 200 \
   --operator-size 32 --decompose 8 --max-modes 0 \
   --operator-factorization factorized --factorized-rank 1 \
-  --factorized-input-chunk 16 \
+  --factorized-input-chunk 32 \
   --output-scale 0.015 --lr 5e-4 --max-grad-norm 1.0 \
   --seed 42 --save-checkpoint --device cuda \
   > "$LOG_DIR/$RUN.log" 2>&1 &
@@ -336,7 +336,7 @@ CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/stage4_0/train_am_pkno_ns_v1e
   --ntrain 1000 --ntest 200 \
   --operator-size 32 --decompose 8 --max-modes 0 \
   --operator-factorization factorized --factorized-rank 1 \
-  --factorized-input-chunk 16 \
+  --factorized-input-chunk 32 \
   --output-scale 0.01 --lr 3e-4 --max-grad-norm 1.0 \
   --seed 42 --save-checkpoint --device cuda \
   > "$LOG_DIR/$RUN.log" 2>&1 &
@@ -354,7 +354,7 @@ CUDA_VISIBLE_DEVICES=3 nohup python -u experiments/stage4_0/train_am_pkno_shallo
   --ntrain 900 --ntest 100 --dt 0.01 \
   --operator-size 32 --decompose 4 --max-modes 0 \
   --operator-factorization factorized --factorized-rank 1 \
-  --factorized-input-chunk 8 \
+  --factorized-input-chunk 32 \
   --output-scale 0.005 --lr 5e-5 --max-grad-norm 0.1 \
   --seed 42 --save-checkpoint --device cuda \
   > "$LOG_DIR/$RUN.log" 2>&1 &

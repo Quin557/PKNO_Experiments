@@ -129,10 +129,10 @@ einsum("bixy,bxior,byior->boxy")
 默认实现参数：
 
 ```text
---factorized-input-chunk 4
+--factorized-input-chunk 32
 ```
 
-这个参数不改变使用所有频率的事实，只是控制一次 contraction 处理多少个 observable input。它比 `--max-modes 16` 更适合作为主实验加速/稳显存手段，因为它保留 `max_modes=0` 的 all-frequency AM-PKNO 设定。
+这个参数不改变使用所有频率的事实，只是控制一次 contraction 处理多少个 observable input。你已经实测 `chunk32` 时显存最多只到约 40%，所以主线直接定为 `32`。它比 `--max-modes 16` 更适合作为主实验加速/稳显存手段，因为它保留 `max_modes=0` 的 all-frequency AM-PKNO 设定。
 
 同时，Stage4_0 默认开启 `checkpoint_koopman=true`，对 repeated Koopman updates 使用 activation checkpoint。它会让训练变慢，但能显著降低 `t_out * decompose` 展开图的显存压力。
 
