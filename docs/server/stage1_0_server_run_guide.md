@@ -300,11 +300,11 @@ echo $!
 ### NS v1e-4 full
 
 ```bash
-RUN=amkno_ns_v1e4_o32_allfreq_fact1_r8_t40_ep500_seed42
-CUDA_VISIBLE_DEVICES=7 nohup python -u experiments/stage1_0/train_am_kno_ns_v1e4.py \
+RUN=amkno_ns_v1e4_o32_allfreq_fact1_r8_t20_ep500_seed42
+CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/stage1_0/train_am_kno_ns_v1e4.py \
   --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" \
   --run-name "$RUN" --output-dir "$OUT_DIR" \
-  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 20 \
   --ntrain 1000 --ntest 200 \
   --operator-size 32 --decompose 8 --condition-mode freq --max-modes 0 \
   --operator-factorization factorized --factorized-rank 1 \
