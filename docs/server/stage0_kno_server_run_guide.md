@@ -275,8 +275,8 @@ echo $!
 ### 7.1 Burgers full
 
 ```bash
-RUN=kno_koopmanlab_burgers_o32_m16_r8_ep500_seed42
-CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/official_kno/train_koopmanlab_burgers.py \
+RUN=kno_koopmanlab_burgers_o32_m16_r8_ep500_seed42_return1
+CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/official_kno/train_koopmanlab_burgers.py \
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
   --data-path "$DATA_ROOT/$BURGERS_FILE" \
   --run-name "$RUN" \
@@ -302,8 +302,8 @@ echo $!
 旧的 `lr=0.005` 长训已在约 epoch 27 发散。正式复跑建议：
 
 ```bash
-RUN=kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_lr001_seed42_rerun1
-CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
+RUN=kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_lr001_seed42_rerun1_1
+CUDA_VISIBLE_DEVICES=3 nohup python -u experiments/official_kno/train_koopmanlab_ns.py \
   --koopmanlab-root "$KOOPMANLAB_ROOT" \
   --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" \
   --run-name "$RUN" \

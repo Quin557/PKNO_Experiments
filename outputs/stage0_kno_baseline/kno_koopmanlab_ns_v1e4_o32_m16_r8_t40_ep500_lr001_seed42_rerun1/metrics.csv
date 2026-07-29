@@ -1,2 +1,0 @@
-epoch,rollout_mse_mean,params,source
-500,0.6767657995223999,526026,official_koopmanlab_wrapper
