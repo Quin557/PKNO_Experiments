@@ -318,7 +318,7 @@ echo $!
 
 ```bash
 RUN=amkno_shallow_water_o32_allfreq_fact1_r8_t40_ep500_seed42
-CUDA_VISIBLE_DEVICES=3 nohup python -u experiments/stage1_0/train_am_kno_shallow_water.py \
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage1_0/train_am_kno_shallow_water.py \
   --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" \
   --run-name "$RUN" --output-dir "$OUT_DIR" \
   --epochs 500 --batch-size 5 --t-in 10 --t-out 40 \
