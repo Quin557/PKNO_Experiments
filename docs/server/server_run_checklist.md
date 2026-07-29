@@ -1,4 +1,12 @@
-# 第一阶段 KNO Baseline 服务器运行指南
+# 第一阶段 KNO Baseline 服务器运行总览
+
+Stage 0 的完整、当前版服务器指南已拆分到：
+
+```text
+docs/server/stage0_kno_server_run_guide.md
+```
+
+本文件保留为阶段总览和旧索引，完整命令以新 guide 为准。
 
 本指南用于当前第一阶段：**跑 KoopmanLab / KNO 官方 baseline**。
 
