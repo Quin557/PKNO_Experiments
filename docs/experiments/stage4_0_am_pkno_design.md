@@ -112,6 +112,22 @@ K(kx, ky, c)[i,o] = sum_r Gx(kx, c)[i,o,r] * Gy(ky, c)[i,o,r]
 
 `max_modes=0` 表示使用当前 FFT 网格可用的所有频率。若显存不足，再把它改成 `--max-modes 16` 或 `--max-modes 24`，并在 run name 中写清 `cap16/cap24`。
 
+实现注意：
+
+```text
+K(kx,ky,c) 的 factorized 公式不能直接用三操作数 einsum 一步算完。
+```
+
+初版直接使用：
+
+```text
+einsum("bixy,bxior,byior->boxy")
+```
+
+在 NS/shallow-water 的 `t_out=40, decompose=8` full run 中会触发 OOM。原因是 PyTorch 可能隐式保存 `[B,Kx,Ky,O,O,R]` 级别中间张量，并在 autoregressive rollout 中累积数百次。当前代码已改为逐 rank / observable input 累加的 memory-efficient contraction，数学表达不变，但避免 materialize 完整 batch-specific 2D Koopman matrix。
+
+同时，Stage4_0 默认开启 `checkpoint_koopman=true`，对 repeated Koopman updates 使用 activation checkpoint。它会让训练变慢，但能显著降低 `t_out * decompose` 展开图的显存压力。
+
 ## 5. 四个数据集默认设计
 
 | Dataset | Stage4_0 default | 设计理由 |

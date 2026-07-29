@@ -198,19 +198,55 @@ Gx: [B, Kx, O, O, R]
 Gy: [B, Ky, O, O, R]
 ```
 
-时间推进直接使用：
+数学上，factorized time marching 是：
 
 ```text
-torch.einsum("bixy,bxior,byior->boxy", z_hat, Gx, Gy)
+einsum("bixy,bxior,byior->boxy", z_hat, Gx, Gy)
 ```
 
-这样避免显式先 materialize 完整的：
+但代码不能直接调用这个三操作数 einsum。PyTorch 的 contraction path 可能隐式 materialize：
 
 ```text
-[B, Kx, Ky, O, O]
+[B, Kx, Ky, O_in, O_out, R]
 ```
 
-batch-specific matrix 张量。
+级别的中间张量。以 NS `B=10, X=64, Yh=33, O=32, R=1` 为例，单次 Koopman update 就可能额外产生约 `166 MiB` 的 complex 中间量。训练时还会展开：
+
+```text
+t_out * decompose = 40 * 8 = 320
+```
+
+次 Koopman update，autograd 会保存这些中间图，48GB GPU 会爆显存。
+
+因此 `src/ampkno/operators.py` 中的 factorized path 使用 memory-efficient contraction：
+
+```text
+for r in rank:
+  for i in observable_in:
+    out += z_hat[:, i] * Gx[:, :, i, :, r] * Gy[:, :, i, :, r]
+```
+
+这样最大的临时张量保持在输出尺度：
+
+```text
+[B, O_out, Kx, Ky]
+```
+
+代价是速度会比直接 einsum 慢，但这是保留 all-frequency AM-PKNO 的更合理第一版实现。
+
+另外，Stage4_0 默认对每次 Koopman update 开启 activation checkpoint：
+
+```text
+checkpoint_koopman = true
+```
+
+原因是 autoregressive training 会展开 `t_out * decompose` 次 Koopman update。checkpoint 会在 backward 时重算 operator forward，减少保存的中间激活。代价是训练更慢，但比单纯降低 batch size 或直接截断频率更符合 Stage4_0 要验证 all-frequency AM-PKNO 的目标。
+
+如果后续确认某张 GPU 显存充足、希望换速度，可以在训练命令中加：
+
+```text
+--no-checkpoint-koopman
+```
 
 ## 5. Shape 约定
 
@@ -287,6 +323,7 @@ factorized_rank=1
 lr=5e-4
 output_scale=0.015
 max_grad_norm=1.0
+checkpoint_koopman=true
 ```
 
 ### NS v1e-4
@@ -304,6 +341,7 @@ factorized_rank=1
 lr=3e-4
 output_scale=0.01
 max_grad_norm=1.0
+checkpoint_koopman=true
 ```
 
 注意：当前服务器记录显示 `ns_V1e-4_N10000_T30.mat` 实际有 50 帧，所以 Stage4_0 默认用 `t_out=40`。
@@ -324,6 +362,7 @@ factorized_rank=1
 lr=5e-5
 output_scale=0.005
 max_grad_norm=0.1
+checkpoint_koopman=true
 ```
 
 这是根据 Stage3_0 shallow-water full run 的非有限 loss 风险做的保守默认。先保证 smoke/full 稳定，再逐步提高 `decompose` 或 `output_scale`。
@@ -369,5 +408,6 @@ gradient error 不变差
 - 尚未加入谱半径/谱范数稳定化约束；
 - 尚未做 NS v1e-3 + v1e-4 joint training；
 - shallow-water 的显式 dam 参数仍取决于 HDF5 是否提供元数据。
+- memory-efficient factorized contraction 牺牲了一部分速度；如果 all-frequency 仍然太慢，优先做 `max_modes=16/24` 的 compute cap 对照，而不是回退到 full 2D generator。
 
 这些应根据 smoke/full 结果决定是否进入 Stage4_1，而不是现在提前堆进第一版。

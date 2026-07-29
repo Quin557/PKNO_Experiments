@@ -58,7 +58,7 @@ class AMParamKoopmanOperator1D(nn.Module):
     def make_weights(self, x: torch.Tensor, condition_embed: torch.Tensor) -> torch.Tensor:
         if x.ndim != 3:
             raise ValueError(f"1D operator expects [B, O, X], got {tuple(x.shape)}.")
-        modes = _cap_count(torch.fft.rfft(x).shape[-1], self.max_modes)
+        modes = _cap_count(x.shape[-1] // 2 + 1, self.max_modes)
         freq_embed = self.embedding(self._freq(x.shape[-1], modes, x.device, x.real.dtype))
         return self.generator(freq_embed, condition_embed)
 
@@ -139,7 +139,32 @@ class AMParamKoopmanOperator2D(nn.Module):
     @staticmethod
     def _time_march_factorized(x_ft: torch.Tensor, weights: FactorizedWeights2D) -> torch.Tensor:
         factor_x, factor_y = weights
-        return torch.einsum("bixy,bxior,byior->boxy", x_ft, factor_x, factor_y)
+        if x_ft.shape[0] != factor_x.shape[0] or x_ft.shape[0] != factor_y.shape[0]:
+            raise ValueError("x_ft and factorized weights must share the same batch size.")
+        if x_ft.shape[1] != factor_x.shape[2] or x_ft.shape[1] != factor_y.shape[2]:
+            raise ValueError("x_ft and factorized weights disagree on observable input dimension.")
+        if factor_x.shape[-1] != factor_y.shape[-1]:
+            raise ValueError("x/y factorized weights disagree on rank.")
+
+        # A direct three-operand einsum,
+        #   "bixy,bxior,byior->boxy",
+        # lets PyTorch materialize a [B, X, Y, I, O, R]-scale intermediate on
+        # some contraction paths. In a 40-step rollout with decompose=8 this
+        # intermediate is saved hundreds of times for autograd and exhausts
+        # 48GB GPUs. Accumulating one input observable/rank at a time keeps the
+        # largest temporary at output size [B, O, X, Y] while preserving the same
+        # mathematical factorization.
+        batch, _, modes_x, modes_y = x_ft.shape
+        out_channels = factor_x.shape[3]
+        rank = factor_x.shape[-1]
+        out = x_ft.new_zeros((batch, out_channels, modes_x, modes_y))
+        for rank_index in range(rank):
+            for input_index in range(x_ft.shape[1]):
+                x_i = x_ft[:, input_index].unsqueeze(1)
+                fx_i = factor_x[:, :, input_index, :, rank_index].permute(0, 2, 1).unsqueeze(-1)
+                fy_i = factor_y[:, :, input_index, :, rank_index].permute(0, 2, 1).unsqueeze(-2)
+                out = out + x_i * fx_i * fy_i
+        return out
 
     def _indices(self, size_x: int, size_yh: int, device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
         if self.max_modes is None or self.max_modes <= 0:
@@ -185,8 +210,7 @@ class AMParamKoopmanOperator2D(nn.Module):
     def make_weights(self, x: torch.Tensor, condition_embed: torch.Tensor) -> torch.Tensor | FactorizedWeights2D:
         if x.ndim != 4:
             raise ValueError(f"2D operator expects [B, O, X, Y], got {tuple(x.shape)}.")
-        x_ft = torch.fft.rfft2(x)
-        idx_x, idx_y = self._indices(x_ft.shape[-2], x_ft.shape[-1], x.device)
+        idx_x, idx_y = self._indices(x.shape[-2], x.shape[-1] // 2 + 1, x.device)
         if self.operator_factorization == "factorized":
             if self.axis_embedding is None or self.factorized_generator is None:
                 raise RuntimeError("Factorized generator is not initialized.")
@@ -214,12 +238,16 @@ class AMParamKoopmanOperator2D(nn.Module):
         idx_x, idx_y = self._indices(x_ft.shape[-2], x_ft.shape[-1], x.device)
         if weights is None:
             weights = self.make_weights(x, condition_embed)
-        selected = x_ft[:, :, idx_x][:, :, :, idx_y]
+        use_all_modes = idx_x.numel() == x_ft.shape[-2] and idx_y.numel() == x_ft.shape[-1]
+        selected = x_ft if use_all_modes else x_ft[:, :, idx_x][:, :, :, idx_y]
         marched = (
             self._time_march_factorized(selected, weights)
             if isinstance(weights, tuple)
             else self._time_march_full(selected, weights)
         )
-        out_ft = torch.zeros_like(x_ft)
-        out_ft[:, :, idx_x[:, None], idx_y[None, :]] = marched
+        if use_all_modes:
+            out_ft = marched
+        else:
+            out_ft = torch.zeros_like(x_ft)
+            out_ft[:, :, idx_x[:, None], idx_y[None, :]] = marched
         return torch.fft.irfft2(out_ft, s=x.shape[-2:])

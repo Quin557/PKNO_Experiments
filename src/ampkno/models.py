@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import torch
 from torch import nn
+from torch.utils.checkpoint import checkpoint
 
 from amkno.highfreq import HighFrequencyResidual1D, HighFrequencyResidual2D
 from ampkno.operators import AMParamKoopmanOperator1D, AMParamKoopmanOperator2D
@@ -51,6 +52,7 @@ class AMPKNOBase(nn.Module):
         use_hf_residual: bool = False,
         hf_hidden_dim: int = 32,
         hf_residual_scale: float = 0.1,
+        checkpoint_koopman: bool = True,
     ) -> None:
         super().__init__()
         if spatial_dim not in {1, 2}:
@@ -63,6 +65,7 @@ class AMPKNOBase(nn.Module):
         self.decompose = decompose
         self.linear_type = linear_type
         self.hf_residual_scale = hf_residual_scale
+        self.checkpoint_koopman = checkpoint_koopman
 
         self.dictionary = SharedPointwiseDictionary(
             input_dim=input_channels,
@@ -141,6 +144,32 @@ class AMPKNOBase(nn.Module):
             return z.permute(0, 2, 1)
         return z.permute(0, 2, 3, 1)
 
+    def _koopman_update(
+        self,
+        z: torch.Tensor,
+        condition_embed: torch.Tensor,
+        weights: torch.Tensor | tuple[torch.Tensor, torch.Tensor],
+    ) -> torch.Tensor:
+        if not self.checkpoint_koopman or not self.training:
+            return self.koopman_layer(z, condition_embed, weights=weights)
+
+        if isinstance(weights, tuple):
+            factor_x, factor_y = weights
+
+            def run_factorized(
+                z_in: torch.Tensor,
+                factor_x_in: torch.Tensor,
+                factor_y_in: torch.Tensor,
+            ) -> torch.Tensor:
+                return self.koopman_layer(z_in, condition_embed, weights=(factor_x_in, factor_y_in))
+
+            return checkpoint(run_factorized, z, factor_x, factor_y, use_reentrant=False)
+
+        def run_full(z_in: torch.Tensor, weights_in: torch.Tensor) -> torch.Tensor:
+            return self.koopman_layer(z_in, condition_embed, weights=weights_in)
+
+        return checkpoint(run_full, z, weights, use_reentrant=False)
+
     def forward(self, history: torch.Tensor, condition: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Predict one autoregressive step and reconstruct the current history."""
 
@@ -153,7 +182,7 @@ class AMPKNOBase(nn.Module):
         z_skip = z
         weights = self.koopman_layer.make_weights(z, condition_embed)
         for _ in range(self.decompose):
-            dz = self.koopman_layer(z, condition_embed, weights=weights)
+            dz = self._koopman_update(z, condition_embed, weights)
             z = z + dz if self.linear_type else torch.tanh(z + dz)
         z = torch.tanh(self.skip(z_skip) + z)
         prediction = self.pred_decoder(self._to_channels_last(z))

@@ -58,6 +58,15 @@ def test_am_param_koopman_2d_factorized_forward_shape():
     assert torch.isfinite(y).all()
 
 
+def test_memory_efficient_factorized_march_matches_direct_einsum():
+    x_ft = torch.randn(2, 3, 4, 5, dtype=torch.cfloat)
+    factor_x = torch.randn(2, 4, 3, 6, 2, dtype=torch.cfloat)
+    factor_y = torch.randn(2, 5, 3, 6, 2, dtype=torch.cfloat)
+    expected = torch.einsum("bixy,bxior,byior->boxy", x_ft, factor_x, factor_y)
+    actual = AMParamKoopmanOperator2D._time_march_factorized(x_ft, (factor_x, factor_y))
+    assert torch.allclose(actual, expected, atol=1e-5, rtol=1e-5)
+
+
 def test_am_param_koopman_2d_full_forward_shape():
     op = AMParamKoopmanOperator2D(
         observable_dim=4,

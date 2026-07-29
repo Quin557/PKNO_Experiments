@@ -95,7 +95,38 @@ K_k(c_n) = G_phi(Chebyshev(k), c_n)  # conditioned AM Koopman generator
 
 并把 run name 中的 `allfreq` 改成 `cap16`。
 
-## 5. Smoke Tests
+## 5.1 显存注意：更新到 OOM 修复版
+
+Stage4_0 初版曾在 NS/shallow-water 的 all-frequency factorized path 上爆显存。原因不是模型参数量太大，而是直接计算：
+
+```text
+einsum("bixy,bxior,byior->boxy")
+```
+
+时，PyTorch 可能隐式生成 `[B, Kx, Ky, O, O, R]` 级别中间张量。`t_out=40, decompose=8` 会把这个中间图保存数百次，48GB GPU 也会被耗尽。
+
+请先确认服务器代码已经包含修复版：
+
+```bash
+git pull origin main
+grep -n "memory-efficient contraction" -n src/ampkno/operators.py
+```
+
+如果没有匹配结果，先不要继续跑 Stage4_0 full run。
+
+修复版还默认开启 Koopman update activation checkpoint：
+
+```text
+checkpoint_koopman=true
+```
+
+命令里不需要额外加参数。若后续显存很宽裕、想牺牲显存换速度，才加：
+
+```text
+--no-checkpoint-koopman
+```
+
+## 6. Smoke Tests
 
 先每个数据集跑 1 epoch，只确认数据读取、condition vector、conditioned AM generator、rollout 和写文件正常。
 
@@ -239,7 +270,7 @@ nohup python -u experiments/stage4_0/train_am_pkno_shallow_water.py \
 echo $!
 ```
 
-## 6. Full Runs
+## 7. Full Runs
 
 Smoke 通过后再跑 full。若 GPU 足够，可以一张卡跑一个实验。
 
@@ -317,7 +348,7 @@ CUDA_VISIBLE_DEVICES=3 nohup python -u experiments/stage4_0/train_am_pkno_shallo
 echo $!
 ```
 
-## 7. 监控
+## 8. 监控
 
 ```bash
 watch -n 5 nvidia-smi
@@ -326,7 +357,7 @@ tail -n 5 outputs/stage4_0_am_pkno/<run_name>/metrics.csv
 cat outputs/stage4_0_am_pkno/<run_name>/spectral_metrics.csv
 ```
 
-## 8. 汇总
+## 9. 汇总
 
 ```bash
 python scripts/collect_results.py
@@ -334,7 +365,7 @@ cat results/stage4_0_am_pkno/run_summary.csv
 cat results/run_summary.csv
 ```
 
-## 9. 推荐顺序
+## 10. 推荐顺序
 
 ```text
 1. Burgers smoke
@@ -347,7 +378,7 @@ cat results/run_summary.csv
 8. Shallow-water full
 ```
 
-如果 NS 或 shallow-water all-frequency 显存不足，第一轮不要改学习率，先保留其他参数并加：
+如果更新到 OOM 修复版后，NS 或 shallow-water all-frequency 仍显存不足，第一轮不要改学习率，先保留其他参数并加：
 
 ```text
 --max-modes 16

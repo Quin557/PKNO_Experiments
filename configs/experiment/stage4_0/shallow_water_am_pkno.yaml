@@ -29,6 +29,7 @@ default_args:
   generator_hidden_dim: 128
   generator_depth: 2
   output_scale: 0.005
+  checkpoint_koopman: true
   lr: 5.0e-5
   max_grad_norm: 0.1
   seed: 42

@@ -80,6 +80,13 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--use-hf-residual", action="store_true")
     parser.add_argument("--hf-hidden-dim", type=int, default=32)
     parser.add_argument("--hf-residual-scale", type=float, default=0.1)
+    parser.add_argument(
+        "--no-checkpoint-koopman",
+        dest="checkpoint_koopman",
+        action="store_false",
+        help="Disable activation checkpointing around repeated Koopman updates. Faster but uses more memory.",
+    )
+    parser.set_defaults(checkpoint_koopman=True)
     parser.add_argument("--save-checkpoint", action="store_true")
     parser.add_argument("--log-every", type=int, default=1)
 
@@ -115,6 +122,7 @@ def build_model(args: argparse.Namespace, bundle: LoaderBundle) -> torch.nn.Modu
         use_hf_residual=args.use_hf_residual,
         hf_hidden_dim=args.hf_hidden_dim,
         hf_residual_scale=args.hf_residual_scale,
+        checkpoint_koopman=args.checkpoint_koopman,
     )
 
 
