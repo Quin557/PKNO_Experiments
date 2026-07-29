@@ -14,6 +14,7 @@ import scipy.io
 import torch
 import yaml
 
+from checkpoint_utils import save_checkpoint_last
 from koopmanlab_utils import koopmanlab_optional_output_flag
 
 
@@ -180,6 +181,14 @@ def main() -> None:
     model.compile()
     model.opt_init("Adam", lr=args.lr, step_size=args.step_size, gamma=args.gamma)
     model.train(epochs=args.epochs, trainloader=train_loader, evalloader=test_loader, T_out=args.t_out)
+    save_checkpoint_last(
+        out_dir / "checkpoint_last.pt",
+        model=model,
+        optimizer=model.optimizer,
+        epoch=args.epochs,
+        args=config,
+        seed=args.seed,
+    )
 
     time_error = model.test(
         test_loader,

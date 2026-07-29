@@ -12,6 +12,8 @@ from typing import Any
 import torch
 import yaml
 
+from checkpoint_utils import save_checkpoint_last
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Train official KoopmanLab KNO on Burgers")
@@ -102,6 +104,14 @@ def main() -> None:
     model.opt_init("Adam", lr=args.lr, step_size=args.step_size, gamma=args.gamma)
     model.train_single(epochs=args.epochs, trainloader=train_loader, evalloader=test_loader)
     test_mse = float(model.test_single(test_loader))
+    save_checkpoint_last(
+        out_dir / "checkpoint_last.pt",
+        model=model,
+        optimizer=model.optimizer,
+        epoch=args.epochs,
+        args=config,
+        seed=args.seed,
+    )
 
     with (out_dir / "metrics.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["epoch", "test_mse", "params", "source"])
