@@ -76,6 +76,12 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         help="2D AM-PKNO generator type. 1D always uses the direct conditioned generator.",
     )
     parser.add_argument("--factorized-rank", type=int, default=1)
+    parser.add_argument(
+        "--factorized-input-chunk",
+        type=int,
+        default=4,
+        help="Input-observable chunk size for memory-safe 2D factorized contraction.",
+    )
     parser.add_argument("--max-grad-norm", type=float, default=None)
     parser.add_argument("--use-hf-residual", action="store_true")
     parser.add_argument("--hf-hidden-dim", type=int, default=32)
@@ -119,6 +125,7 @@ def build_model(args: argparse.Namespace, bundle: LoaderBundle) -> torch.nn.Modu
         output_scale=args.output_scale,
         operator_factorization=args.operator_factorization,
         factorized_rank=args.factorized_rank,
+        factorized_input_chunk=args.factorized_input_chunk,
         use_hf_residual=args.use_hf_residual,
         hf_hidden_dim=args.hf_hidden_dim,
         hf_residual_scale=args.hf_residual_scale,

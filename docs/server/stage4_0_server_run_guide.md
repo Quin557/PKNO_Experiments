@@ -126,6 +126,14 @@ checkpoint_koopman=true
 --no-checkpoint-koopman
 ```
 
+2D factorized all-frequency 默认还会使用 chunked contraction：
+
+```text
+--factorized-input-chunk 4
+```
+
+这个参数不改变模型公式，只控制实现里一次处理多少个 observable input。chunk 越大通常越快但更占显存；如果仍 OOM，优先试 `--factorized-input-chunk 2`，而不是直接把 `--max-modes 0` 改成 `16`。
+
 ## 6. Smoke Tests
 
 先每个数据集跑 1 epoch，只确认数据读取、condition vector、conditioned AM generator、rollout 和写文件正常。

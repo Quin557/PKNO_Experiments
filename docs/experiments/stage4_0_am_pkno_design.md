@@ -124,7 +124,15 @@ K(kx,ky,c) 的 factorized 公式不能直接用三操作数 einsum 一步算完�
 einsum("bixy,bxior,byior->boxy")
 ```
 
-在 NS/shallow-water 的 `t_out=40, decompose=8` full run 中会触发 OOM。原因是 PyTorch 可能隐式保存 `[B,Kx,Ky,O,O,R]` 级别中间张量，并在 autoregressive rollout 中累积数百次。当前代码已改为逐 rank / observable input 累加的 memory-efficient contraction，数学表达不变，但避免 materialize 完整 batch-specific 2D Koopman matrix。
+在 NS/shallow-water 的 `t_out=40, decompose=8` full run 中会触发 OOM。原因是 PyTorch 可能隐式保存 `[B,Kx,Ky,O,O,R]` 级别中间张量，并在 autoregressive rollout 中累积数百次。当前代码已改为 chunked memory-efficient contraction，数学表达不变，但避免 materialize 完整 batch-specific 2D Koopman matrix。
+
+默认实现参数：
+
+```text
+--factorized-input-chunk 4
+```
+
+这个参数不改变使用所有频率的事实，只是控制一次 contraction 处理多少个 observable input。它比 `--max-modes 16` 更适合作为主实验加速/稳显存手段，因为它保留 `max_modes=0` 的 all-frequency AM-PKNO 设定。
 
 同时，Stage4_0 默认开启 `checkpoint_koopman=true`，对 repeated Koopman updates 使用 activation checkpoint。它会让训练变慢，但能显著降低 `t_out * decompose` 展开图的显存压力。
 

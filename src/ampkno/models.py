@@ -48,6 +48,7 @@ class AMPKNOBase(nn.Module):
         output_scale: float = 0.02,
         operator_factorization: str = "factorized",
         factorized_rank: int = 1,
+        factorized_input_chunk: int = 4,
         linear_type: bool = True,
         use_hf_residual: bool = False,
         hf_hidden_dim: int = 32,
@@ -126,6 +127,7 @@ class AMPKNOBase(nn.Module):
                 output_scale=output_scale,
                 operator_factorization=operator_factorization,
                 factorized_rank=factorized_rank,
+                factorized_input_chunk=factorized_input_chunk,
             )
             self.skip = nn.Conv2d(observable_dim, observable_dim, 1)
             self.hf_residual = (

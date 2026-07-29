@@ -25,6 +25,7 @@ default_args:
   basis_kind: navier_stokes
   operator_factorization: factorized
   factorized_rank: 1
+  factorized_input_chunk: 4
   generator_hidden_dim: 128
   generator_depth: 2
   output_scale: 0.01

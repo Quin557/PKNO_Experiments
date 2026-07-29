@@ -218,21 +218,33 @@ t_out * decompose = 40 * 8 = 320
 
 次 Koopman update，autograd 会保存这些中间图，48GB GPU 会爆显存。
 
-因此 `src/ampkno/operators.py` 中的 factorized path 使用 memory-efficient contraction：
+因此 `src/ampkno/operators.py` 中的 factorized path 使用 chunked memory-efficient contraction：
 
 ```text
 for r in rank:
-  for i in observable_in:
-    out += z_hat[:, i] * Gx[:, :, i, :, r] * Gy[:, :, i, :, r]
+  for i_chunk in observable_in chunks:
+    out += einsum("bcxy,bxco,byco->boxy", z_hat_chunk, Gx_chunk, Gy_chunk)
 ```
 
-这样最大的临时张量保持在输出尺度：
+这样最大的临时张量从完整：
 
 ```text
-[B, O_out, Kx, Ky]
+[B, Kx, Ky, O_in, O_out, R]
 ```
 
-代价是速度会比直接 einsum 慢，但这是保留 all-frequency AM-PKNO 的更合理第一版实现。
+降到：
+
+```text
+[B, Kx, Ky, chunk, O_out]
+```
+
+默认：
+
+```text
+factorized_input_chunk = 4
+```
+
+这比逐 observable Python 循环更快，同时仍避免 materialize 完整 batch-specific 2D Koopman matrix。
 
 另外，Stage4_0 默认对每次 Koopman update 开启 activation checkpoint：
 
@@ -320,6 +332,7 @@ decompose=8
 max_modes=0
 operator_factorization=factorized
 factorized_rank=1
+factorized_input_chunk=4
 lr=5e-4
 output_scale=0.015
 max_grad_norm=1.0
@@ -338,6 +351,7 @@ decompose=8
 max_modes=0
 operator_factorization=factorized
 factorized_rank=1
+factorized_input_chunk=4
 lr=3e-4
 output_scale=0.01
 max_grad_norm=1.0
@@ -359,6 +373,7 @@ decompose=4
 max_modes=0
 operator_factorization=factorized
 factorized_rank=1
+factorized_input_chunk=4
 lr=5e-5
 output_scale=0.005
 max_grad_norm=0.1

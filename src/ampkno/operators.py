@@ -99,13 +99,17 @@ class AMParamKoopmanOperator2D(nn.Module):
         output_scale: float = 0.02,
         operator_factorization: str = "factorized",
         factorized_rank: int = 1,
+        factorized_input_chunk: int = 4,
     ) -> None:
         super().__init__()
         if operator_factorization not in {"factorized", "full"}:
             raise ValueError("operator_factorization must be 'factorized' or 'full'.")
+        if factorized_input_chunk <= 0:
+            raise ValueError("factorized_input_chunk must be positive.")
         self.observable_dim = observable_dim
         self.max_modes = max_modes
         self.operator_factorization = operator_factorization
+        self.factorized_input_chunk = factorized_input_chunk
         if operator_factorization == "factorized":
             self.axis_embedding = ChebyshevFrequencyEmbedding(spatial_dim=1, basis_dim=frequency_basis_dim)
             self.factorized_generator = ConditionedFactorizedMatrixGenerator2D(
@@ -137,7 +141,11 @@ class AMParamKoopmanOperator2D(nn.Module):
         return torch.einsum("bixy,bxyio->boxy", x_ft, weights)
 
     @staticmethod
-    def _time_march_factorized(x_ft: torch.Tensor, weights: FactorizedWeights2D) -> torch.Tensor:
+    def _time_march_factorized(
+        x_ft: torch.Tensor,
+        weights: FactorizedWeights2D,
+        input_chunk_size: int = 4,
+    ) -> torch.Tensor:
         factor_x, factor_y = weights
         if x_ft.shape[0] != factor_x.shape[0] or x_ft.shape[0] != factor_y.shape[0]:
             raise ValueError("x_ft and factorized weights must share the same batch size.")
@@ -145,6 +153,8 @@ class AMParamKoopmanOperator2D(nn.Module):
             raise ValueError("x_ft and factorized weights disagree on observable input dimension.")
         if factor_x.shape[-1] != factor_y.shape[-1]:
             raise ValueError("x/y factorized weights disagree on rank.")
+        if input_chunk_size <= 0:
+            raise ValueError("input_chunk_size must be positive.")
 
         # STAGE4_OOM_FIX_MEMORY_EFFICIENT_CONTRACTION:
         # A direct three-operand einsum,
@@ -152,19 +162,23 @@ class AMParamKoopmanOperator2D(nn.Module):
         # lets PyTorch materialize a [B, X, Y, I, O, R]-scale intermediate on
         # some contraction paths. In a 40-step rollout with decompose=8 this
         # intermediate is saved hundreds of times for autograd and exhausts
-        # 48GB GPUs. Accumulating one input observable/rank at a time keeps the
-        # largest temporary at output size [B, O, X, Y] while preserving the same
-        # mathematical factorization.
+        # 48GB GPUs. Chunking the input observable dimension keeps the largest
+        # temporary at [B, X, Y, chunk, O] scale while preserving the same
+        # mathematical factorization. This is faster than a pure Python loop over
+        # individual observables and still avoids materializing the full matrix.
         batch, _, modes_x, modes_y = x_ft.shape
         out_channels = factor_x.shape[3]
         rank = factor_x.shape[-1]
         out = x_ft.new_zeros((batch, out_channels, modes_x, modes_y))
         for rank_index in range(rank):
-            for input_index in range(x_ft.shape[1]):
-                x_i = x_ft[:, input_index].unsqueeze(1)
-                fx_i = factor_x[:, :, input_index, :, rank_index].permute(0, 2, 1).unsqueeze(-1)
-                fy_i = factor_y[:, :, input_index, :, rank_index].permute(0, 2, 1).unsqueeze(-2)
-                out = out + x_i * fx_i * fy_i
+            for start in range(0, x_ft.shape[1], input_chunk_size):
+                end = min(start + input_chunk_size, x_ft.shape[1])
+                out = out + torch.einsum(
+                    "bcxy,bxco,byco->boxy",
+                    x_ft[:, start:end],
+                    factor_x[:, :, start:end, :, rank_index],
+                    factor_y[:, :, start:end, :, rank_index],
+                )
         return out
 
     def _indices(self, size_x: int, size_yh: int, device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
@@ -242,7 +256,7 @@ class AMParamKoopmanOperator2D(nn.Module):
         use_all_modes = idx_x.numel() == x_ft.shape[-2] and idx_y.numel() == x_ft.shape[-1]
         selected = x_ft if use_all_modes else x_ft[:, :, idx_x][:, :, :, idx_y]
         marched = (
-            self._time_march_factorized(selected, weights)
+            self._time_march_factorized(selected, weights, self.factorized_input_chunk)
             if isinstance(weights, tuple)
             else self._time_march_full(selected, weights)
         )
