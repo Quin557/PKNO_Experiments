@@ -1,0 +1,2 @@
+params,peak_memory_gb,inference_ms_per_step,rollout_ms
+526026,0.274080753326416,3.6669331724988297,146.6773268999532

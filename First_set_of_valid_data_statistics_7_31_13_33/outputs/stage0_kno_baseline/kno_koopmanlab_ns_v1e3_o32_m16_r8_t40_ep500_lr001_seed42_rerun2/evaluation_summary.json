@@ -1,0 +1,32 @@
+{
+  "dataset": "navier_stokes",
+  "epoch": 500,
+  "full_rollout_rel_l2": 0.016292240992188452,
+  "inference_ms_per_step": 3.090049066267966,
+  "model": "official_koopmanlab_kno",
+  "params": 526026,
+  "peak_memory_gb": 0.15243768692016602,
+  "rollout_growth_slope": 0.0003438068382567804,
+  "rollout_ms": 123.60196265071863,
+  "rollout_slope_fit_end": 39,
+  "rollout_slope_fit_start": 0,
+  "run_name": "kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_lr001_seed42_rerun2",
+  "seed": 42,
+  "spectral_band_config": {
+    "high": [
+      0.66,
+      1.01
+    ],
+    "low": [
+      0.0,
+      0.33
+    ],
+    "mid": [
+      0.33,
+      0.66
+    ]
+  },
+  "step_rel_l2": 0.015506814233958721,
+  "test_mse": 0.00023695750534534455,
+  "viscosity": "1e-3"
+}

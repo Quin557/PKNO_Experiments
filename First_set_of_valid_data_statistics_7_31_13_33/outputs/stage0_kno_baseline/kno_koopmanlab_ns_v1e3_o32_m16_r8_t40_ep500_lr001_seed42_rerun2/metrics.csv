@@ -1,0 +1,2 @@
+run_name,model,dataset,viscosity,seed,epoch,test_mse,step_rel_l2,full_rollout_rel_l2,rollout_growth_slope,params,peak_memory_gb,inference_ms_per_step,rollout_ms
+kno_koopmanlab_ns_v1e3_o32_m16_r8_t40_ep500_lr001_seed42_rerun2,official_koopmanlab_kno,navier_stokes,1e-3,42,500,0.00023695750534534455,0.015506814233958721,0.016292240992188452,0.0003438068382567804,526026,0.15243768692016602,3.090049066267966,123.60196265071863

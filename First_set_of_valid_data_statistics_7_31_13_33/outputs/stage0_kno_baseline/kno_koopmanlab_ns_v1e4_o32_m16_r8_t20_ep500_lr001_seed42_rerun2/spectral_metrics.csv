@@ -1,0 +1,6 @@
+metric,value
+low_spectral_rel_l2,1.73191573e-01
+mid_spectral_rel_l2,1.18939382e+00
+high_spectral_rel_l2,2.32941664e+00
+gradient_rel_l2,6.30134454e-01
+band_config_json,"{""high"": [0.66, 1.01], ""low"": [0.0, 0.33], ""mid"": [0.33, 0.66]}"

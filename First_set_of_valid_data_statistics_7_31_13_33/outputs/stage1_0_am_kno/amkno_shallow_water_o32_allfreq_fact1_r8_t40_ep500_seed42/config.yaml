@@ -1,0 +1,76 @@
+batch_size: 5
+condition_dim: 7
+condition_embed_dim: 128
+condition_mode: freq
+data_path: /home/lpq/Wangwanqi/PKNO_Experiments/data/shallow_water/2D_rdb_NA_NA.h5
+dataset_metadata:
+  condition_fields:
+  - dx
+  - dy
+  - dt
+  - t_in
+  - t_out
+  - sub
+  - radial_dam_break_flag
+  condition_values:
+  - 0.007874015748031496
+  - 0.007874015748031496
+  - 0.01
+  - 10.0
+  - 40.0
+  - 1.0
+  - 1.0
+  dataset: shallow_water
+  source_layout: grouped-TXYC
+  test_shape:
+  - 100
+  - 128
+  - 128
+  - 10
+  train_shape:
+  - 900
+  - 128
+  - 128
+  - 10
+decoder_hidden_dim: 0
+decompose: 8
+device: cuda
+dt: 0.01
+encoder_hidden_dim: 0
+epochs: 500
+factorized_rank: 1
+frequency_basis_dim: 32
+gamma: 0.5
+generator_depth: 2
+generator_hidden_dim: 128
+hf_hidden_dim: 32
+hf_residual_scale: 0.1
+input_channels: 10
+log_every: 1
+lr: 0.0002
+max_grad_norm: 0.5
+max_modes: 0
+mode_policy: all_fft_modes
+model: AM-KNO
+ntest: 100
+ntrain: 900
+num_workers: 0
+operator_factorization: factorized
+operator_size: 32
+output_channels: 1
+output_dir: outputs/stage1_0_am_kno
+output_scale: 0.015
+run_name: amkno_shallow_water_o32_allfreq_fact1_r8_t40_ep500_seed42
+save_checkpoint: true
+seed: 42
+spatial_dim: 2
+stage: stage1_0_am_kno
+stage1_0_default_rule: pure_frequency_am
+state_embed_dim: 64
+step_size: 100
+sub: 1
+t_in: 10
+t_out: 40
+t_out_resolved: 40
+use_hf_residual: false
+weight_decay: 0.0001

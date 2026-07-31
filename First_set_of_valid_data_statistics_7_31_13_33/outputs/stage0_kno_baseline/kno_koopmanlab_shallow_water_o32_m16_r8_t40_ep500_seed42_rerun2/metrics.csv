@@ -1,0 +1,2 @@
+run_name,model,dataset,viscosity,seed,epoch,test_mse,step_rel_l2,full_rollout_rel_l2,rollout_growth_slope,params,peak_memory_gb,inference_ms_per_step,rollout_ms
+kno_koopmanlab_shallow_water_o32_m16_r8_t40_ep500_seed42_rerun2,official_koopmanlab_kno,shallow_water,,42,500,6.913335621356964e-05,0.00790871400386095,0.007970062009990215,1.0816202023700872e-05,526026,0.274080753326416,3.6669331724988297,146.6773268999532

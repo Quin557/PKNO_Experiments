@@ -1,0 +1,32 @@
+{
+  "dataset": "shallow_water",
+  "epoch": 500,
+  "full_rollout_rel_l2": 0.007970062009990215,
+  "inference_ms_per_step": 3.6669331724988297,
+  "model": "official_koopmanlab_kno",
+  "params": 526026,
+  "peak_memory_gb": 0.274080753326416,
+  "rollout_growth_slope": 1.0816202023700872e-05,
+  "rollout_ms": 146.6773268999532,
+  "rollout_slope_fit_end": 39,
+  "rollout_slope_fit_start": 0,
+  "run_name": "kno_koopmanlab_shallow_water_o32_m16_r8_t40_ep500_seed42_rerun2",
+  "seed": 42,
+  "spectral_band_config": {
+    "high": [
+      0.66,
+      1.01
+    ],
+    "low": [
+      0.0,
+      0.33
+    ],
+    "mid": [
+      0.33,
+      0.66
+    ]
+  },
+  "step_rel_l2": 0.00790871400386095,
+  "test_mse": 6.913335621356964e-05,
+  "viscosity": ""
+}
