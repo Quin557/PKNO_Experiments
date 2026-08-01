@@ -123,13 +123,62 @@ echo $!
 
 ## 5. Full runs
 
-Replace `--epochs 1` with `--epochs 500 --step-size 100 --gamma 0.5 --save-checkpoint` in the corresponding smoke command. Use the following distinct run names:
+Use a new output directory for every full run. The four commands below retain the paper-aligned IKNO architecture and the current repository's dataset splits. Shallow-water uses batch size 1 because its full-resolution 40-step training graph exceeds 48 GB at batch size 5.
 
-```text
-ikno_burgers_o32_m16_l4_p2_ep500_seed42
-ikno_ns_v1e3_o32_m16_l4_p2_t40_ep500_seed42
-ikno_ns_v1e4_o32_m16_l4_p2_t40_ep500_seed42
-ikno_shallow_water_o32_m16_l4_p2_t40_ep500_seed42
+### Burgers
+
+```bash
+RUN=ikno_burgers_o32_m16_l4_p2_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/ikno/train_ikno_burgers.py \
+  --data-path "$DATA_ROOT/$BURGERS_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 64 --sub 32 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 4 --koopman-power 2 \
+  --inn-blocks 4 --inn-hidden-dim 128 --lr 1e-3 --step-size 100 --gamma 0.5 \
+  --seed 42 --save-checkpoint --device cuda \
+  > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### Navier-Stokes v1e-3
+
+```bash
+RUN=ikno_ns_v1e3_o32_m16_l4_p2_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/ikno/train_ikno_ns_v1e3.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 4 --koopman-power 2 \
+  --inn-blocks 4 --inn-hidden-dim 128 --lr 1e-3 --step-size 100 --gamma 0.5 \
+  --seed 42 --save-checkpoint --device cuda \
+  > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### Navier-Stokes v1e-4
+
+```bash
+RUN=ikno_ns_v1e4_o32_m16_l4_p2_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/ikno/train_ikno_ns_v1e4.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 4 --koopman-power 2 \
+  --inn-blocks 4 --inn-hidden-dim 128 --lr 1e-3 --step-size 100 --gamma 0.5 \
+  --seed 42 --save-checkpoint --device cuda \
+  > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### Shallow-water
+
+```bash
+RUN=ikno_shallow_water_o32_m16_l4_p2_b1_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=3 nohup python -u experiments/ikno/train_ikno_shallow_water.py \
+  --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 1 --t-in 10 --t-out 40 --ntrain 900 --ntest 100 --dt 0.01 \
+  --operator-size 32 --modes 16 --decompose 4 --koopman-power 2 \
+  --inn-blocks 4 --inn-hidden-dim 128 --lr 1e-3 --step-size 100 --gamma 0.5 \
+  --seed 42 --save-checkpoint --device cuda \
+  > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
 ```
 
 Do not overwrite a smoke directory with a full run.
