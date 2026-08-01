@@ -1,6 +1,14 @@
 # Stage3_1 PKNO-U 服务器运行指南
 
 本指南只服务 `stage3_1_param_kno_u`，不修改 `server_run_checklist.md`。
+它完整列出四个数据集上 A/B/C 三种条件模型的 smoke 与 full 命令。一次只启动一个
+同 GPU 的任务；不要把同一数据集的 A/B/C 同时塞进同一张 GPU。
+
+```text
+A = physical_only
+B = physical_compact_state
+C = physical_gated_state
+```
 
 ## 1. 环境与代码检查
 
@@ -30,6 +38,8 @@ python -m pytest -q \
 
 ## 2. 数据与目录
 
+每次新终端开始时先执行：
+
 ```bash
 source configs/data_paths.env
 
@@ -57,59 +67,181 @@ outputs/stage3_1_param_kno_u/<run_name>/
   rollout_error_by_step.csv
   spectral_metrics.csv
   stability_diagnostics.csv
-  checkpoint_best.pt       # 仅在 --save-checkpoint 时生成，git 忽略
-  checkpoint_last.pt       # 仅在 --save-checkpoint 时生成，git 忽略
+  checkpoint_best.pt       # 仅 full 的 --save-checkpoint 时生成，git 忽略
+  checkpoint_last.pt       # 仅 full 的 --save-checkpoint 时生成，git 忽略
 ```
 
 ## 3. Smoke Tests
 
-先运行主模型 A `physical_only`。B/C 必须在 A 的 smoke 有限且矩阵范数受控后才运行。
+执行顺序必须为 A -> B -> C。仅当前一个 smoke 的 `metrics.csv` 无 NaN/Inf、
+`matrix_spectral_max <= 0.98` 且显存可接受时，才启动下一个。
 
-### Burgers
+### 3.1 Burgers smoke
+
+#### A
 
 ```bash
 RUN=smoke_pknou_a_burgers_o32_m16_r8_seed42
 CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_burgers.py \
-  --data-path "$DATA_ROOT/$BURGERS_FILE" \
-  --run-name "$RUN" --output-dir "$OUT_DIR" \
-  --epochs 1 --batch-size 64 --sub 32 \
+  --data-path "$DATA_ROOT/$BURGERS_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 64 --sub 32 --ntrain 1000 --ntest 200 \
   --operator-size 32 --modes 16 --decompose 8 \
   --condition-mode physical_only --max-operator-norm 0.98 \
-  --lr 1e-3 --seed 42 --device cuda \
-  > "$LOG_DIR/$RUN.log" 2>&1 &
+  --lr 1e-3 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
 echo $!
 ```
 
-### NS v1e-3
+#### B
+
+```bash
+RUN=smoke_pknou_b_burgers_o32_m16_r8_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_burgers.py \
+  --data-path "$DATA_ROOT/$BURGERS_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 64 --sub 32 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 \
+  --condition-mode physical_compact_state --max-operator-norm 0.98 \
+  --lr 1e-3 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### C
+
+```bash
+RUN=smoke_pknou_c_burgers_o32_m16_r8_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_burgers.py \
+  --data-path "$DATA_ROOT/$BURGERS_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 64 --sub 32 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 \
+  --condition-mode physical_gated_state --max-operator-norm 0.98 \
+  --lr 1e-3 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### 3.2 NS v1e-3 smoke
+
+#### A
 
 ```bash
 RUN=smoke_pknou_a_ns_v1e3_o32_m16_r8_t40_seed42
 CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e3.py \
-  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" \
-  --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
   --epochs 1 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
   --operator-size 32 --modes 16 --decompose 8 \
   --condition-mode physical_only --max-operator-norm 0.98 \
-  --lr 5e-4 --max-grad-norm 1.0 --seed 42 --device cuda \
-  > "$LOG_DIR/$RUN.log" 2>&1 &
+  --lr 5e-4 --max-grad-norm 1.0 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
 echo $!
 ```
 
-### Shallow-water
+#### B
 
-Shallow-water 首轮固定 `decompose=2`，不要直接复制 Stage3_0 的 `r8` 命令。
+```bash
+RUN=smoke_pknou_b_ns_v1e3_o32_m16_r8_t40_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e3.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 \
+  --condition-mode physical_compact_state --max-operator-norm 0.98 \
+  --lr 5e-4 --max-grad-norm 1.0 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### C
+
+```bash
+RUN=smoke_pknou_c_ns_v1e3_o32_m16_r8_t40_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e3.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 \
+  --condition-mode physical_gated_state --max-operator-norm 0.98 \
+  --lr 5e-4 --max-grad-norm 1.0 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### 3.3 NS v1e-4 smoke
+
+#### A
+
+```bash
+RUN=smoke_pknou_a_ns_v1e4_o32_m16_r8_t40_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e4.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 \
+  --condition-mode physical_only --max-operator-norm 0.98 \
+  --lr 3e-4 --max-grad-norm 1.0 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### B
+
+```bash
+RUN=smoke_pknou_b_ns_v1e4_o32_m16_r8_t40_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e4.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 \
+  --condition-mode physical_compact_state --max-operator-norm 0.98 \
+  --lr 3e-4 --max-grad-norm 1.0 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### C
+
+```bash
+RUN=smoke_pknou_c_ns_v1e4_o32_m16_r8_t40_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e4.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 \
+  --condition-mode physical_gated_state --max-operator-norm 0.98 \
+  --lr 3e-4 --max-grad-norm 1.0 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### 3.4 Shallow-water smoke
+
+Shallow-water 的 A/B/C 首轮全部固定 `decompose=2`，不得直接改为 `r8`。
+
+#### A
 
 ```bash
 RUN=smoke_pknou_a_shallow_water_o32_m16_r2_t40_seed42
 CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_shallow_water.py \
-  --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" \
-  --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
   --epochs 1 --batch-size 5 --t-in 10 --t-out 40 --ntrain 900 --ntest 100 --dt 0.01 \
   --operator-size 32 --modes 16 --decompose 2 \
   --condition-mode physical_only --max-operator-norm 0.98 \
   --delta-scale 0.005 --hf-residual-scale 0.02 \
-  --lr 5e-5 --max-grad-norm 0.1 --seed 42 --device cuda \
-  > "$LOG_DIR/$RUN.log" 2>&1 &
+  --lr 5e-5 --max-grad-norm 0.1 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### B
+
+```bash
+RUN=smoke_pknou_b_shallow_water_o32_m16_r2_t40_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_shallow_water.py \
+  --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 5 --t-in 10 --t-out 40 --ntrain 900 --ntest 100 --dt 0.01 \
+  --operator-size 32 --modes 16 --decompose 2 \
+  --condition-mode physical_compact_state --max-operator-norm 0.98 \
+  --delta-scale 0.005 --hf-residual-scale 0.02 \
+  --lr 5e-5 --max-grad-norm 0.1 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### C
+
+```bash
+RUN=smoke_pknou_c_shallow_water_o32_m16_r2_t40_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_shallow_water.py \
+  --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 1 --batch-size 5 --t-in 10 --t-out 40 --ntrain 900 --ntest 100 --dt 0.01 \
+  --operator-size 32 --modes 16 --decompose 2 \
+  --condition-mode physical_gated_state --max-operator-norm 0.98 \
+  --delta-scale 0.005 --hf-residual-scale 0.02 \
+  --lr 5e-5 --max-grad-norm 0.1 --seed 42 --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
 echo $!
 ```
 
@@ -134,26 +266,167 @@ stability_diagnostics.csv 的 matrix_spectral_max <= --max-operator-norm
 若出现非有限值，停止任务并保留日志；不要只降低 learning rate 后覆盖同一个 run。
 若显存不足，依次降低 batch size、`unet-base-channels`、`decompose`，每次只改一项。
 
-## 5. Full Run
+## 5. Full Runs
 
-仅在 smoke 通过后执行。NS v1e-3 主模型 A 示例：
+只有对应 smoke 通过，才启动同一数据集、同一变体的 full run。下面所有 full 使用与
+对应 smoke 完全相同的模型超参数和数据切分，只加入 `--epochs 500 --save-checkpoint`。
+
+### 5.1 Burgers full
+
+#### A
 
 ```bash
-RUN=pknou_a_ns_v1e3_o32_m16_r8_t40_ep500_seed42
-CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e3.py \
-  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" \
-  --run-name "$RUN" --output-dir "$OUT_DIR" \
-  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
-  --operator-size 32 --modes 16 --decompose 8 \
-  --condition-mode physical_only --max-operator-norm 0.98 \
-  --lr 5e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda \
-  > "$LOG_DIR/$RUN.log" 2>&1 &
+RUN=pknou_a_burgers_o32_m16_r8_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_burgers.py \
+  --data-path "$DATA_ROOT/$BURGERS_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 64 --sub 32 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_only \
+  --max-operator-norm 0.98 --lr 1e-3 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
 echo $!
 ```
 
-B/C 只替换 `--condition-mode` 为 `physical_compact_state` 或 `physical_gated_state`；
-run name 必须同时改为 `pknou_b_...` 或 `pknou_c_...`。不得把三种条件设计写进同一个
-run name 或覆盖彼此输出。
+#### B
+
+```bash
+RUN=pknou_b_burgers_o32_m16_r8_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_burgers.py \
+  --data-path "$DATA_ROOT/$BURGERS_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 64 --sub 32 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_compact_state \
+  --max-operator-norm 0.98 --lr 1e-3 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### C
+
+```bash
+RUN=pknou_c_burgers_o32_m16_r8_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_burgers.py \
+  --data-path "$DATA_ROOT/$BURGERS_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 64 --sub 32 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_gated_state \
+  --max-operator-norm 0.98 --lr 1e-3 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### 5.2 NS v1e-3 full
+
+#### A
+
+```bash
+RUN=pknou_a_ns_v1e3_o32_m16_r8_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e3.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_only \
+  --max-operator-norm 0.98 --lr 5e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### B
+
+```bash
+RUN=pknou_b_ns_v1e3_o32_m16_r8_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e3.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_compact_state \
+  --max-operator-norm 0.98 --lr 5e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### C
+
+```bash
+RUN=pknou_c_ns_v1e3_o32_m16_r8_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e3.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_gated_state \
+  --max-operator-norm 0.98 --lr 5e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### 5.3 NS v1e-4 full
+
+#### A
+
+```bash
+RUN=pknou_a_ns_v1e4_o32_m16_r8_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e4.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_only \
+  --max-operator-norm 0.98 --lr 3e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### B
+
+```bash
+RUN=pknou_b_ns_v1e4_o32_m16_r8_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e4.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_compact_state \
+  --max-operator-norm 0.98 --lr 3e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### C
+
+```bash
+RUN=pknou_c_ns_v1e4_o32_m16_r8_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_ns_v1e4.py \
+  --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --ntrain 1000 --ntest 200 \
+  --operator-size 32 --modes 16 --decompose 8 --condition-mode physical_gated_state \
+  --max-operator-norm 0.98 --lr 3e-4 --max-grad-norm 1.0 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+### 5.4 Shallow-water full
+
+Shallow-water 必须先完成对应 A/B/C 的 r2 smoke。r2 full 稳定前，禁止把任何变体改为 r4/r8。
+
+#### A
+
+```bash
+RUN=pknou_a_shallow_water_o32_m16_r2_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_shallow_water.py \
+  --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 5 --t-in 10 --t-out 40 --ntrain 900 --ntest 100 --dt 0.01 \
+  --operator-size 32 --modes 16 --decompose 2 --condition-mode physical_only \
+  --max-operator-norm 0.98 --delta-scale 0.005 --hf-residual-scale 0.02 \
+  --lr 5e-5 --max-grad-norm 0.1 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### B
+
+```bash
+RUN=pknou_b_shallow_water_o32_m16_r2_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_shallow_water.py \
+  --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 5 --t-in 10 --t-out 40 --ntrain 900 --ntest 100 --dt 0.01 \
+  --operator-size 32 --modes 16 --decompose 2 --condition-mode physical_compact_state \
+  --max-operator-norm 0.98 --delta-scale 0.005 --hf-residual-scale 0.02 \
+  --lr 5e-5 --max-grad-norm 0.1 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
+
+#### C
+
+```bash
+RUN=pknou_c_shallow_water_o32_m16_r2_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/stage3_1/train_pkno_u_shallow_water.py \
+  --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
+  --epochs 500 --batch-size 5 --t-in 10 --t-out 40 --ntrain 900 --ntest 100 --dt 0.01 \
+  --operator-size 32 --modes 16 --decompose 2 --condition-mode physical_gated_state \
+  --max-operator-norm 0.98 --delta-scale 0.005 --hf-residual-scale 0.02 \
+  --lr 5e-5 --max-grad-norm 0.1 --seed 42 --save-checkpoint --device cuda > "$LOG_DIR/$RUN.log" 2>&1 &
+echo $!
+```
 
 ## 6. 结果登记
 
@@ -165,4 +438,4 @@ python scripts/collect_results.py
 
 再向 `results/experiment_result_inventory.csv` 追加该 run 的命令、配置、状态和来源。
 源码、文档、配置和轻量 CSV 可以在本地提交；数据、logs、outputs 与 checkpoint 不提交。
-本阶段不执行任何 `git push`。
+本阶段不会自动执行 `git push`。
