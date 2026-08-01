@@ -1,0 +1,18 @@
+experiment: stage3_1_ns_v1e4_pkno_u
+script: experiments/stage3_1/train_pkno_u_ns_v1e4.py
+dataset: navier_stokes
+default_args:
+  epochs: 500
+  batch_size: 10
+  t_in: 10
+  t_out: 40
+  ntrain: 1000
+  ntest: 200
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  condition_mode: physical_only
+  max_operator_norm: 0.98
+  lr: 3.0e-4
+  max_grad_norm: 1.0
+  seed: 42

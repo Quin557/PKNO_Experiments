@@ -1,0 +1,20 @@
+experiment: stage3_1_shallow_water_pkno_u
+script: experiments/stage3_1/train_pkno_u_shallow_water.py
+dataset: shallow_water
+default_args:
+  epochs: 500
+  batch_size: 5
+  t_in: 10
+  t_out: 40
+  ntrain: 900
+  ntest: 100
+  operator_size: 32
+  modes: 16
+  decompose: 2
+  condition_mode: physical_only
+  max_operator_norm: 0.98
+  delta_scale: 0.005
+  hf_residual_scale: 0.02
+  lr: 5.0e-5
+  max_grad_norm: 0.1
+  seed: 42

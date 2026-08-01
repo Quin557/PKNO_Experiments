@@ -1,0 +1,25 @@
+model: stage3_1_param_kno_u
+stage: stage3_1
+framework: pytorch
+training_loss: "5 * rollout_prediction_mse + 0.5 * reconstruction_mse"
+evaluation_primary_metric: full_rollout_relative_l2
+design:
+  shared_dictionary:
+    rule: "Psi_theta(history) is condition independent."
+  condition_modes:
+    main: physical_only
+    ablations: [physical_compact_state, physical_gated_state]
+  koopman_operator:
+    rule: "K_k = rho_max * (I + K0_k + DeltaK_phi(k, c)) / (1 + ||K0_k + DeltaK_phi||_F)"
+    max_operator_norm: 0.98
+  u_fourier:
+    rule: "Late layers add a high-pass latent U-Net residual to the stable Koopman update."
+    unet_start_layer: auto_half
+    hf_cutoff: 0.5
+defaults:
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  condition_mode: physical_only
+  max_operator_norm: 0.98
+  hf_residual_scale: 0.05

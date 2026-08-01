@@ -1,0 +1,13 @@
+experiment: stage3_1_burgers_pkno_u
+script: experiments/stage3_1/train_pkno_u_burgers.py
+dataset: burgers
+default_args:
+  epochs: 500
+  batch_size: 64
+  sub: 32
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  condition_mode: physical_only
+  lr: 1.0e-3
+  seed: 42
