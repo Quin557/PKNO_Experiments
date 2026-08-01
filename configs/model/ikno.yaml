@@ -1,0 +1,24 @@
+model: ikno
+source_priority:
+  - 2503.19717v1
+  - official_koopmanlab_for_kno_data_and_rollout_conventions
+  - local_pytorch_implementation
+defaults:
+  operator_size: 32
+  modes: 16
+  decompose: 4
+  koopman_power: 2
+  inn_blocks: 4
+  inn_hidden_dim: 128
+  optimizer: adam
+  learning_rate: 0.001
+  scheduler: step_lr
+  scheduler_step_size: 100
+  scheduler_gamma: 0.5
+losses:
+  prediction_weight: 5.0
+  reconstruction_weight: 0.0
+notes:
+  - The paper does not specify the INN block count or its hidden dimension.
+  - The local defaults use four blocks and hidden width 128; record overrides in each run config.
+  - The shared rollout trainer uses its existing prediction MSE objective; reconstruction loss is disabled for IKNO.
