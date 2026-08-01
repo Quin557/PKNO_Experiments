@@ -20,7 +20,7 @@ class FixedKoopmanOperator1D(nn.Module):
         )
 
     @staticmethod
-    def _apply(x_ft: torch.Tensor, matrix: torch.Tensor) -> torch.Tensor:
+    def _apply_matrix(x_ft: torch.Tensor, matrix: torch.Tensor) -> torch.Tensor:
         return torch.einsum("bim,mio->bom", x_ft, matrix)
 
     def forward(self, x: torch.Tensor, *, power: int = 1) -> torch.Tensor:
@@ -32,7 +32,7 @@ class FixedKoopmanOperator1D(nn.Module):
         modes = min(self.modes, x_ft.shape[-1])
         evolved = x_ft[:, :, :modes]
         for _ in range(power):
-            evolved = self._apply(evolved, self.matrix[:modes])
+            evolved = self._apply_matrix(evolved, self.matrix[:modes])
         out_ft = torch.zeros_like(x_ft)
         out_ft[:, :, :modes] = evolved
         return torch.fft.irfft(out_ft, n=x.shape[-1])
@@ -60,13 +60,13 @@ class FixedKoopmanOperator2D(nn.Module):
         )
 
     @staticmethod
-    def _apply(x_ft: torch.Tensor, matrix: torch.Tensor) -> torch.Tensor:
+    def _apply_matrix(x_ft: torch.Tensor, matrix: torch.Tensor) -> torch.Tensor:
         return torch.einsum("bixy,xyio->boxy", x_ft, matrix)
 
     def _evolve(self, x_ft: torch.Tensor, matrix: torch.Tensor, power: int) -> torch.Tensor:
         evolved = x_ft
         for _ in range(power):
-            evolved = self._apply(evolved, matrix)
+            evolved = self._apply_matrix(evolved, matrix)
         return evolved
 
     def forward(self, x: torch.Tensor, *, power: int = 1) -> torch.Tensor:
