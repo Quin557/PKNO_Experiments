@@ -1,0 +1,5 @@
+experiment: stage3_2_ns_joint_pkno_v1
+script: experiments/pkno_v1/train_pkno_v1_ns_joint.py
+split: per_condition_train_0_999_val_1200_1399_test_1000_1199
+sampling: equal_per_batch
+defaults: {epochs: 500, batch_size: 10, t_in: 10, t_out: 40, modes: 16, decompose: 8, lr: 5.0e-4, growth_weight: 1.0e-3, seed: 42}

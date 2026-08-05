@@ -18,6 +18,8 @@ import scipy.io
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
+from pkno.data.split_protocol import SampleSplit, max_index
+
 
 @dataclass(frozen=True)
 class LoaderBundle:
@@ -149,16 +151,35 @@ def build_navier_stokes_stage3_loaders(
     ntest: int = 200,
     dt: float = 1.0,
     num_workers: int = 0,
+    split: SampleSplit | None = None,
 ) -> LoaderBundle:
-    total = ntrain + ntest
-    data = _load_ns_tensor(data_path, viscosity_type, total)
+    if split is None:
+        if ntrain != 1000 or ntest != 200:
+            raise ValueError(
+                "Changing NS ntrain/ntest without an explicit SampleSplit changes the historical test set. "
+                "Pass split=SampleSplit(...) or use the default 1000/200 protocol."
+            )
+        train_indices = tuple(range(1000))
+        test_indices = tuple(range(1000, 1200))
+        split_name = "legacy_1000_200"
+    else:
+        split.validate(max_index((split.train, split.val, split.test)) + 1)
+        train_indices = split.train
+        test_indices = split.test
+        split_name = split.name
+        ntrain = len(train_indices)
+        ntest = len(test_indices)
+    needed = max_index((train_indices, test_indices)) + 1
+    data = _load_ns_tensor(data_path, viscosity_type, needed)
     if data.shape[-1] < t_in + t_out:
         raise ValueError(f"NS data has {data.shape[-1]} time steps; need {t_in + t_out}.")
 
-    train_x = data[:ntrain, ::sub, ::sub, :t_in]
-    train_y = data[:ntrain, ::sub, ::sub, t_in : t_in + t_out]
-    test_x = data[-ntest:, ::sub, ::sub, :t_in]
-    test_y = data[-ntest:, ::sub, ::sub, t_in : t_in + t_out]
+    train_index_tensor = torch.tensor(train_indices, dtype=torch.long)
+    test_index_tensor = torch.tensor(test_indices, dtype=torch.long)
+    train_x = data[train_index_tensor, ::sub, ::sub, :t_in]
+    train_y = data[train_index_tensor, ::sub, ::sub, t_in : t_in + t_out]
+    test_x = data[test_index_tensor, ::sub, ::sub, :t_in]
+    test_y = data[test_index_tensor, ::sub, ::sub, t_in : t_in + t_out]
     viscosity = _viscosity_value(viscosity_type)
     dx = 1.0 / max(train_x.shape[1] - 1, 1)
     dy = 1.0 / max(train_x.shape[2] - 1, 1)
@@ -188,6 +209,9 @@ def build_navier_stokes_stage3_loaders(
             "dataset": f"navier_stokes_{viscosity_type}",
             "condition_fields": ["log10_viscosity", "dx", "dy", "dt", "t_in", "t_out", "sub"],
             "condition_values": condition,
+            "split_name": split_name,
+            "train_indices": list(train_indices),
+            "test_indices": list(test_indices),
             "train_shape": list(train_x.shape),
             "test_shape": list(test_x.shape),
         },

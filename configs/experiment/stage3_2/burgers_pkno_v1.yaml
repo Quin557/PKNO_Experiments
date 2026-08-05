@@ -1,0 +1,4 @@
+experiment: stage3_2_burgers_pkno_v1
+script: experiments/pkno_v1/train_pkno_v1_burgers.py
+split: final_1000_train_200_test
+defaults: {epochs: 500, batch_size: 64, modes: 16, decompose: 8, lr: 1.0e-3, seed: 42}

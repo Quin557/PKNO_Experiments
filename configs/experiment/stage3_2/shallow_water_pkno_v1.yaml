@@ -1,0 +1,4 @@
+experiment: stage3_2_shallow_water_pkno_v1
+script: experiments/pkno_v1/train_pkno_v1_shallow_water.py
+split: final_900_train_100_test
+defaults: {epochs: 500, batch_size: 5, t_in: 10, t_out: 40, modes: 16, decompose: 4, lr: 5.0e-5, delta_scale: 5.0e-3, seed: 42}

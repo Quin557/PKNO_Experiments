@@ -1,0 +1,4 @@
+experiment: stage3_2_ns_v1e3_pkno_v1
+script: experiments/pkno_v1/train_pkno_v1_ns_v1e3.py
+split: train_0_999_val_1200_1399_test_1000_1199
+defaults: {epochs: 500, batch_size: 10, t_in: 10, t_out: 40, modes: 16, decompose: 8, lr: 5.0e-4, seed: 42}

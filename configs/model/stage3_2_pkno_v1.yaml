@@ -1,0 +1,27 @@
+model: stage3_2_pkno_v1
+stage: stage3_2
+framework: pytorch
+design:
+  dictionary: "Shared condition-independent PKNO dictionary Psi_theta(h_n)."
+  operator: "K_k = K0_k + DeltaK_phi(freq(k), e_phys + gate * e_state)"
+  output: "u_(n+1) = u_n + Decoder(z_(n+1))"
+  conditioning:
+    state_embed_dim: 64
+    condition_embed_dim: 128
+    gate_max: 0.1
+    physical_fields_only: true
+    remove_protocol_fields: [t_in, t_out]
+  stability:
+    state_correction_penalty: true
+    temporal_condition_penalty: true
+    ns_v1e4_growth_envelope: true
+  training:
+    objective: "MSE prediction + MSE reconstruction + soft stability terms"
+    reporting_metric: "full rollout relative L2"
+    curriculum: ["1 step x 50 epochs", "5 steps x 25 epochs", "10 steps x 25 epochs", "T40 x 400 epochs"]
+defaults:
+  operator_size: 32
+  modes: 16
+  decompose: 8
+  seed: 42
+  epochs: 500
