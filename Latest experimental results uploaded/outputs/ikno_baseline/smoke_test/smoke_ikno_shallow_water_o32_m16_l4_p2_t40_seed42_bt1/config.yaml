@@ -1,0 +1,67 @@
+batch_size: 1
+condition_dim: 7
+data_path: /home/lpq/Wangwanqi/PKNO_Experiments/data/shallow_water/2D_rdb_NA_NA.h5
+dataset_metadata:
+  condition_fields:
+  - dx
+  - dy
+  - dt
+  - t_in
+  - t_out
+  - sub
+  - radial_dam_break_flag
+  condition_values:
+  - 0.007874015748031496
+  - 0.007874015748031496
+  - 0.01
+  - 10.0
+  - 40.0
+  - 1.0
+  - 1.0
+  dataset: shallow_water
+  source_layout: grouped-TXYC
+  test_shape:
+  - 100
+  - 128
+  - 128
+  - 10
+  train_shape:
+  - 900
+  - 128
+  - 128
+  - 10
+decompose: 4
+device: cuda
+dictionary: pointwise_invertible_residual_coupling
+dt: 0.01
+epochs: 1
+gamma: 0.5
+inn_blocks: 4
+inn_hidden_dim: 128
+input_channels: 10
+koopman_power: 2
+log_every: 1
+lr: 0.001
+max_grad_norm: null
+model: IKNO
+modes: 16
+ntest: 100
+ntrain: 900
+num_workers: 0
+operator_size: 32
+output_channels: 1
+output_dir: outputs/ikno_baseline
+prediction_weight: 5.0
+reconstruction_loss: false
+reconstruction_weight: 0.0
+run_name: smoke_ikno_shallow_water_o32_m16_l4_p2_t40_seed42_bt1
+save_checkpoint: false
+seed: 42
+spatial_dim: 2
+stage: ikno_baseline
+step_size: 100
+sub: 1
+t_in: 10
+t_out: 40
+t_out_resolved: 40
+weight_decay: 0.0001

@@ -1,0 +1,2 @@
+step,condition_gate,matrix_spectral_mean,matrix_spectral_max,latent_rms,unet_highpass_rms
+0.0,0.0,0.8991376161575317,0.932171642780304,0.35669317841529846,0.016458438709378242

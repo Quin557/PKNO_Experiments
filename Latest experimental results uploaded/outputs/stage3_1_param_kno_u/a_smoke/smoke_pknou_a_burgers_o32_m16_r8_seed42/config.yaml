@@ -1,0 +1,66 @@
+basis_kind: burgers
+batch_size: 64
+checkpoint_unet: true
+condition_dim: 4
+condition_embed_dim: 128
+condition_mode: physical_only
+data_path: /home/lpq/Wangwanqi/PKNO_Experiments/data/burgers/burgers_data_R10.mat
+dataset_metadata:
+  condition_fields:
+  - log10_reynolds
+  - dx
+  - sub
+  - is_periodic
+  condition_values:
+  - 1.0
+  - 0.00392156862745098
+  - 32.0
+  - 1.0
+  dataset: burgers
+  test_shape:
+  - 200
+  - 256
+  - 1
+  train_shape:
+  - 1000
+  - 256
+  - 1
+decompose: 8
+delta_scale: 0.05
+device: cuda
+diagnostic_batches: 1
+dictionary_depth: 2
+dictionary_hidden_dim: 128
+epochs: 1
+evaluation_primary_metric: full_rollout_relative_l2
+gamma: 0.5
+hf_cutoff: 0.5
+hf_residual_scale: 0.05
+input_channels: 1
+koopman_depth: 2
+koopman_hidden_dim: 128
+log_every: 1
+lr: 0.001
+max_grad_norm: null
+max_operator_norm: 0.98
+model: PKNO-U
+modes: 16
+ntest: 200
+ntrain: 1000
+num_workers: 0
+operator_size: 32
+output_channels: 1
+output_dir: outputs/stage3_1_param_kno_u
+run_name: smoke_pknou_a_burgers_o32_m16_r8_seed42
+save_checkpoint: false
+seed: 42
+spatial_dim: 1
+stage: stage3_1_param_kno_u
+state_embed_dim: 16
+step_size: 100
+sub: 32
+t_out_resolved: 1
+training_loss: 5 * rollout_prediction_mse + 0.5 * reconstruction_mse
+unet_base_channels: 32
+unet_start_layer: null
+weight_decay: 0.0001
