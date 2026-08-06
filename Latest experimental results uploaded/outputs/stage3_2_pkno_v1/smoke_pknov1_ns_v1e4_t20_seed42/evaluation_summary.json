@@ -1,0 +1,9 @@
+{
+  "checkpoint": "final",
+  "full_rel_l2": 1.0448126268386841,
+  "growth_ceiling": 1.0906617641448975,
+  "params": 948353,
+  "pred_mse": 2.725711393356323,
+  "split": "test",
+  "step_rel_l2": 0.8197198343276978
+}

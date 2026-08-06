@@ -61,10 +61,10 @@ CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/pkno_v1/train_pkno_v1_ns_v1e3
   --epochs 1 --batch-size 10 --t-in 10 --t-out 40 --operator-size 32 --modes 16 --decompose 8 \
   --lr 5e-4 --max-grad-norm 1.0 --seed 42 --device cuda --save-checkpoint > "$LOG_DIR/$RUN.log" 2>&1 &
 
-RUN=smoke_pknov1_ns_v1e4_seed42
-CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/pkno_v1/train_pkno_v1_ns_v1e4.py \
+RUN=smoke_pknov1_ns_v1e4_t20_seed42
+CUDA_VISIBLE_DEVICES=4 nohup python -u experiments/pkno_v1/train_pkno_v1_ns_v1e4.py \
   --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
-  --epochs 1 --batch-size 10 --t-in 10 --t-out 40 --operator-size 32 --modes 16 --decompose 8 \
+  --epochs 1 --batch-size 10 --t-in 10 --t-out 20 --operator-size 32 --modes 16 --decompose 8 \
   --lr 5e-4 --max-grad-norm 1.0 --growth-weight 1e-3 --seed 42 --device cuda --save-checkpoint > "$LOG_DIR/$RUN.log" 2>&1 &
 
 RUN=smoke_pknov1_shallow_seed42
@@ -123,22 +123,22 @@ CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/pkno_v1/train_pkno_v1_burgers
   --lr 1e-3 --seed 42 --device cuda --save-checkpoint > "$LOG_DIR/$RUN.log" 2>&1 &
 
 RUN=pknov1_ns_v1e3_o32_m16_r8_t40_ep500_seed42
-CUDA_VISIBLE_DEVICES=1 nohup python -u experiments/pkno_v1/train_pkno_v1_ns_v1e3.py \
+CUDA_VISIBLE_DEVICES=6 nohup python -u experiments/pkno_v1/train_pkno_v1_ns_v1e3.py \
   --data-path "$DATA_ROOT/$NS2D_V1E3_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
   --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --operator-size 32 --modes 16 --decompose 8 \
   --lr 5e-4 --max-grad-norm 1.0 --seed 42 --device cuda --save-checkpoint > "$LOG_DIR/$RUN.log" 2>&1 &
 
-RUN=pknov1_ns_v1e4_o32_m16_r8_t40_ep500_seed42
+RUN=pknov1_ns_v1e4_o32_m16_r8_t20_ep500_seed42
 CUDA_VISIBLE_DEVICES=2 nohup python -u experiments/pkno_v1/train_pkno_v1_ns_v1e4.py \
   --data-path "$DATA_ROOT/$NS2D_V1E4_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
-  --epochs 500 --batch-size 10 --t-in 10 --t-out 40 --operator-size 32 --modes 16 --decompose 8 \
+  --epochs 500 --batch-size 10 --t-in 10 --t-out 20 --operator-size 32 --modes 16 --decompose 8 \
   --lr 5e-4 --max-grad-norm 1.0 --growth-weight 1e-3 --state-weight 1e-4 --smooth-weight 1e-4 \
   --seed 42 --device cuda --save-checkpoint > "$LOG_DIR/$RUN.log" 2>&1 &
 
-RUN=pknov1_shallow_o32_m16_r4_t40_ep500_seed42
-CUDA_VISIBLE_DEVICES=3 nohup python -u experiments/pkno_v1/train_pkno_v1_shallow_water.py \
+RUN=pknov1_shallow_o32_m16_r8_t40_ep500_seed42
+CUDA_VISIBLE_DEVICES=0 nohup python -u experiments/pkno_v1/train_pkno_v1_shallow_water.py \
   --data-path "$DATA_ROOT/$SHALLOW_WATER_FILE" --run-name "$RUN" --output-dir "$OUT_DIR" \
-  --split-mode final --epochs 500 --batch-size 5 --t-in 10 --t-out 40 --operator-size 32 --modes 16 --decompose 4 \
+  --split-mode final --epochs 500 --batch-size 5 --t-in 10 --t-out 40 --operator-size 32 --modes 16 --decompose 8 \
   --lr 5e-5 --delta-scale 0.005 --max-grad-norm 0.1 --seed 42 --device cuda --save-checkpoint > "$LOG_DIR/$RUN.log" 2>&1 &
 ```
 

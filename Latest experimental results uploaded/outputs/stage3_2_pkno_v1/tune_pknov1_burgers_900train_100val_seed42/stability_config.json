@@ -1,0 +1,7 @@
+{
+  "growth_ceiling": null,
+  "growth_quantile": 0.99,
+  "growth_weight": 0.0,
+  "smooth_weight": 0.0001,
+  "state_weight": 0.0001
+}
