@@ -49,7 +49,9 @@ class _PKNOV2Base(nn.Module):
             z = self.koopman.step(z, cond_embed, weights, step_scale=1.0 / max(self.decompose, 1))
         decoded = self.pred_decoder(z.permute(0, 2, 1) if self.spatial_dim == 1 else z.permute(0, 2, 3, 1))
         latest = history[..., -1:]
-        prediction = latest[..., : self.output_channels] + decoded + self.highfreq(latest[..., : self.output_channels])
+        # The residual branch consumes the complete time-delay history.  For
+        # NS/SWE this is ten channels, while its output remains one next frame.
+        prediction = latest[..., : self.output_channels] + decoded + self.highfreq(history)
         eta = self.koopman.eta_max * torch.sigmoid(self.koopman.raw_eta)
         return PKNOV2Output(prediction, reconstruction, state_gate, eta)
 
