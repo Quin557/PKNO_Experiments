@@ -21,6 +21,14 @@ from pkno_v2.trainer import V2TrainConfig, train_v2
 from pkno.trainers.train_rollout import write_json
 
 
+def existing_file(value: str) -> Path:
+    """Argparse validator that prevents an empty variable becoming `.`."""
+    path = Path(value).expanduser()
+    if not path.is_file():
+        raise argparse.ArgumentTypeError(f"--data-path must be an existing file, got: {value!r} (resolved: {path})")
+    return path
+
+
 def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--run-name", required=True)
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/stage3_3_pkno_v2"))
