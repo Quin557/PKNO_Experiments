@@ -1,0 +1,4 @@
+experiment: stage3_3_pkno_v2_shallow_water
+entrypoint: experiments/pkno_v2/train_pkno_v2_shallow_water.py
+defaults: {ntrain: 900, ntest: 100, t_in: 10, t_out: 40, modes: 16, decompose: 4, epochs: 500, seed: 42}
+data: "PDEBench shallow-water path supplied with --data-path"

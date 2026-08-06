@@ -1,0 +1,4 @@
+experiment: stage3_3_pkno_v2_ns_v1e3
+entrypoint: experiments/pkno_v2/train_pkno_v2_ns_v1e3.py
+defaults: {ntrain: 1000, ntest: 200, t_in: 10, t_out: 40, modes: 16, decompose: 8, epochs: 500, seed: 42}
+data: "NS v1e-3 HDF5 path supplied with --data-path"

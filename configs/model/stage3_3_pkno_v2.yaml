@@ -1,0 +1,32 @@
+model: stage3_3_pkno_v2
+stage: stage3_3
+route: PKNO_v2-A
+framework: pytorch
+operator:
+  form: "K_k(c)=K0_k+U_k diag(alpha(c)) V_k^H"
+  rank: 4
+  modes: 16
+  eta_update: "z_next=z+eta_max*sigmoid(raw_eta)/decompose * Kz"
+conditioning:
+  c_static: "normalized physical metadata"
+  state: "compact mean/std/rms/temporal-delta summary"
+  state_embed_dim: 16
+  state_gate_max: 0.15
+high_frequency:
+  path: "single lightweight 3x3 convolutional residual"
+  initial_scale: 0.01
+  unet: false
+training:
+  primary_objective: "late-step weighted prediction MSE"
+  late_step_weight: "linear 1.0 -> 2.0"
+  reconstruction_weight: 0.5
+  gradient_weight: 1.0e-3
+  spectral_weight: 1.0e-4
+  gate_weight: 1.0e-4
+  reporting_metric: "full rollout relative L2 (RL2)"
+protocol:
+  modes_fixed: 16
+  seed: 42
+  epochs_after_smoke: 500
+  ns_split: "1000/200"
+  shallow_water_split: "900/100"
