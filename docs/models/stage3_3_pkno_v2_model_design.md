@@ -44,12 +44,12 @@ learnable dynamics.
 ## High-frequency path / 高频路径
 
 The Fourier branch remains the main predictor.  A single lightweight 3×3
-convolutional residual is applied to the latest physical frame and initialized
+convolutional residual consumes the complete input history and is initialized
 at scale 0.01.  There is no U-Net; the branch is intentionally small to avoid
 the memory multiplication seen when a multiscale network is repeated inside
 `t_out × decompose`.
 
-Fourier 分支仍是主预测器；对最新物理场增加一个轻量 3×3 卷积残差，初始
+Fourier 分支仍是主预测器；对完整输入 history 增加一个轻量 3×3 卷积残差，初始
 幅度约 0.01。不使用 U-Net，避免在 `t_out × decompose` 展开中重复多尺度网络
 造成显存和稳定性问题。
 
@@ -69,14 +69,19 @@ is validation/reporting only, never the training target.
 ## Curriculum and promotion / 课程与晋级
 
 For T=40, epochs 0–39 use one teacher-forced step, 40–79 use five steps,
-80–119 use ten steps, and 120–499 use full autoregressive rollout.  Burgers
-uses one step throughout.  Smoke is exactly one epoch; it must finish without
+80–119 use ten steps, 120–159 use twenty steps, 160–199 use thirty steps, and
+200–499 use full autoregressive rollout. Burgers uses one step throughout.
+Smooth latent and physical-increment envelopes keep rollout values finite; an
+unstable long-horizon batch is retried at a shorter horizon and counted in
+`fallback_batches`. Smoke is exactly one epoch; it must finish without
 non-finite loss before the 500-epoch run.
 
 Promotion requires all four full-rollout RL2 values to beat old PKNO.  The
 stretch target is to also beat KNO, iKNO, and AM-KNO under matched protocols.
 
 对于 T=40，0–39 epoch 为 teacher-forced 单步，40–79 为 5 步，80–119 为 10 步，
-120–499 为完整自回归 rollout；Burgers 始终单步。Smoke 固定 1 epoch，必须无
+120–159 为 20 步，160–199 为 30 步，200–499 才进入完整自回归 rollout；
+Burgers 始终单步。潜变量和物理增量采用平滑限幅；长 rollout 的单个不稳定 batch
+会回退到较短 horizon，并记入 `fallback_batches`。Smoke 固定 1 epoch，必须无
 NaN/Inf 后才能跑 500 epoch。四项 RL2 全部优于旧 PKNO 才能替换论文结果；进一步
 的 stretch target 是在协议匹配时同时超过 KNO、iKNO、AM-KNO。

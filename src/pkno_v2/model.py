@@ -26,9 +26,11 @@ class _PKNOV2Base(nn.Module):
                  observable_dim: int = 32, modes: int = 16, decompose: int = 8, dictionary_hidden_dim: int = 128,
                  dictionary_depth: int = 2, basis_kind: str = "generic", condition_embed_dim: int = 64,
                  state_embed_dim: int = 16, koopman_hidden_dim: int = 128, koopman_depth: int = 2,
-                 rank: int = 4, delta_scale: float = 0.02, eta_max: float = 0.5, hf_hidden: int = 16) -> None:
+                 rank: int = 4, delta_scale: float = 0.02, eta_max: float = 0.5, hf_hidden: int = 16,
+                 latent_clip: float = 5.0, residual_clip: float = 2.0) -> None:
         super().__init__()
         self.spatial_dim, self.output_channels, self.decompose = spatial_dim, output_channels, decompose
+        self.latent_clip, self.residual_clip = float(latent_clip), float(residual_clip)
         self.dictionary = ObservableDictionary(input_channels, observable_dim, dictionary_hidden_dim, dictionary_depth, basis_kind)
         self.pred_decoder = PointwiseDecoder(observable_dim, output_channels, dictionary_hidden_dim)
         self.recon_decoder = PointwiseDecoder(observable_dim, input_channels, dictionary_hidden_dim)
@@ -47,11 +49,14 @@ class _PKNOV2Base(nn.Module):
         weights = self.koopman.make_weights(z, cond_embed)
         for _ in range(self.decompose):
             z = self.koopman.step(z, cond_embed, weights, step_scale=1.0 / max(self.decompose, 1))
+            z = self.latent_clip * torch.tanh(z / self.latent_clip)
         decoded = self.pred_decoder(z.permute(0, 2, 1) if self.spatial_dim == 1 else z.permute(0, 2, 3, 1))
         latest = history[..., -1:]
         # The residual branch consumes the complete time-delay history.  For
         # NS/SWE this is ten channels, while its output remains one next frame.
-        prediction = latest[..., : self.output_channels] + decoded + self.highfreq(history)
+        delta = decoded + self.highfreq(history)
+        delta = self.residual_clip * torch.tanh(delta / self.residual_clip)
+        prediction = latest[..., : self.output_channels] + delta
         eta = self.koopman.eta_max * torch.sigmoid(self.koopman.raw_eta)
         return PKNOV2Output(prediction, reconstruction, state_gate, eta)
 

@@ -41,6 +41,16 @@ test -f "$DATA_ROOT/$SHALLOW_WATER_FILE"
 每个 GPU 只运行一个任务；`modes=16` 不得改动。Smoke 只跑 1 epoch，确认日志
 出现 `epoch 0000` 且没有 `Non-finite` 后，再启动对应 full 命令。
 
+T=40 的 full run 使用渐进课程：1/5/10/20/30/40 步分别从 epoch
+0/40/80/120/160/200 开始。新版训练器对潜变量和物理增量做平滑限幅；若某个
+长 rollout batch 不稳定，会回退到较短 horizon，并在 `metrics.csv` 的
+`fallback_batches` 中记录。不要让 T=20 和 T=40 两个进程共用同一个 log 或
+output run name，否则日志会交错，无法判断哪个实验真正完成。
+
+NS `v1e-4` 只有在当前文件的 `u` 实际包含至少 50 个时间帧时才能运行
+`--t-out 40`；运行前用 `h5py` 检查 shape。若文件只有 30 帧，应单独命名为
+T=20 实验，不得把它写入 T=40 的结果目录。
+
 ## A1. Burgers
 
 Smoke（GPU 0）：

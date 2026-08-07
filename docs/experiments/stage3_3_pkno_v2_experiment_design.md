@@ -23,6 +23,14 @@ The trainer records train MSE, validation RL2 when a tuning split is selected,
 test full-rollout RL2, per-step MSE, and spectral/gradient summaries. Formal
 comparison uses the final full rollout RL2 on the fixed test indices. No test
 set is used to select hyperparameters; tuning runs must use `--split-mode tuning`.
+For T=40 the curriculum moves through 1/5/10/20/30/40 steps at epochs
+0/40/80/120/160/200; `fallback_batches` records a long-rollout batch retried at
+a shorter horizon.
+
+正式比较使用固定测试索引上的最终完整 rollout RL2。不会使用测试集选择超参数；
+调参实验必须使用 `--split-mode tuning`。T=40 的课程在 epoch
+0/40/80/120/160/200 分别使用 1/5/10/20/30/40 步；`fallback_batches` 记录
+发生短 horizon 回退的长 rollout batch。
 
 ## Fifth experiment / 第五实验
 

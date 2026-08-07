@@ -60,6 +60,10 @@ def _horizon(epoch: int, t_out: int) -> tuple[int, bool]:
         return min(5, t_out), False
     if epoch < 120:
         return min(10, t_out), False
+    if epoch < 160:
+        return min(20, t_out), False
+    if epoch < 200:
+        return min(30, t_out), False
     return t_out, False
 
 
@@ -112,14 +116,21 @@ def train_v2(model: nn.Module, train_loader: torch.utils.data.DataLoader, val_lo
     (out_dir / "env.txt").write_text("\n".join([f"python={sys.version}", f"platform={platform.platform()}", f"torch={torch.__version__}", f"cuda={torch.cuda.is_available()}", f"params={params}", f"CUDA_VISIBLE_DEVICES={os.environ.get('CUDA_VISIBLE_DEVICES','')}" ]) + "\n", encoding="utf-8")
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, config.step_size, config.gamma)
-    fields = ["epoch", "seconds", "horizon", "train_loss", "train_pred_mse", "val_full_rel_l2", "test_full_rel_l2", "lr", "params"]
+    fields = ["epoch", "seconds", "horizon", "fallback_batches", "train_loss", "train_pred_mse", "val_full_rel_l2", "test_full_rel_l2", "lr", "params"]
     handle = (out_dir / "metrics.csv").open("w", newline="", encoding="utf-8"); logger = csv.DictWriter(handle, fieldnames=fields); logger.writeheader(); best = float("inf")
     try:
         for epoch in range(config.epochs):
-            model.train(); started = default_timer(); horizon, forced = _horizon(epoch, t_out); total = pred_total = 0.0; seen = 0
+            model.train(); started = default_timer(); horizon, forced = _horizon(epoch, t_out); total = pred_total = 0.0; seen = 0; fallback_batches = 0
             for history, target, condition in train_loader:
                 history, target, condition = history.to(device), target.to(device), condition.to(device)
-                out = rollout(model, history, target, condition, horizon, forced, config)
+                try:
+                    out = rollout(model, history, target, condition, horizon, forced, config)
+                except FloatingPointError:
+                    if horizon <= 10:
+                        raise
+                    fallback_horizon = min(max(horizon // 2, 10), 20, t_out)
+                    out = rollout(model, history, target, condition, fallback_horizon, False, config)
+                    fallback_batches += 1
                 loss = out["pred_loss"] + config.recon_weight * out["recon_loss"] + config.gradient_weight * out["gradient_loss"] + config.spectral_weight * out["spectral_loss"] + config.gate_weight * out["gate_loss"]
                 if not torch.isfinite(loss): raise FloatingPointError(f"Non-finite PKNO_v2 loss at epoch={epoch}")
                 optimizer.zero_grad(set_to_none=True); loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(), config.max_grad_norm); optimizer.step()
@@ -127,11 +138,11 @@ def train_v2(model: nn.Module, train_loader: torch.utils.data.DataLoader, val_lo
             val = _evaluate(model, val_loader, device, t_out) if val_loader is not None else None
             test = _evaluate(model, test_loader, device, t_out)
             scheduler.step(); seconds = default_timer() - started
-            row = {"epoch": epoch, "seconds": f"{seconds:.6f}", "horizon": horizon, "train_loss": f"{total/max(seen,1):.8e}", "train_pred_mse": f"{pred_total/max(seen,1):.8e}", "val_full_rel_l2": "" if val is None else f"{val['full_rel_l2']:.8e}", "test_full_rel_l2": f"{test['full_rel_l2']:.8e}", "lr": f"{scheduler.get_last_lr()[0]:.8e}", "params": params}; logger.writerow(row); handle.flush()
+            row = {"epoch": epoch, "seconds": f"{seconds:.6f}", "horizon": horizon, "fallback_batches": fallback_batches, "train_loss": f"{total/max(seen,1):.8e}", "train_pred_mse": f"{pred_total/max(seen,1):.8e}", "val_full_rel_l2": "" if val is None else f"{val['full_rel_l2']:.8e}", "test_full_rel_l2": f"{test['full_rel_l2']:.8e}", "lr": f"{scheduler.get_last_lr()[0]:.8e}", "params": params}; logger.writerow(row); handle.flush()
             score = val["full_rel_l2"] if val is not None else test["full_rel_l2"]
             if config.save_checkpoint and score < best:
                 best = score; torch.save({"model": model.state_dict(), "epoch": epoch, "score": score}, out_dir / "checkpoint_best.pt")
-            if epoch % config.log_every == 0: print(f"epoch {epoch:04d} | {seconds:.2f}s | horizon {horizon:02d} | train {float(row['train_loss']):.6e} | test {float(row['test_full_rel_l2']):.6e}")
+            if epoch % config.log_every == 0: print(f"epoch {epoch:04d} | {seconds:.2f}s | horizon {horizon:02d} | fallback {fallback_batches:02d} | train {float(row['train_loss']):.6e} | test {float(row['test_full_rel_l2']):.6e}")
     finally:
         handle.close()
     final = _evaluate(model, test_loader, device, t_out)
