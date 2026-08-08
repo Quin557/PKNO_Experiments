@@ -1,0 +1,7 @@
+{
+  "low_band_spectral_rel_l2": 0.10805130004882812,
+  "mid_band_spectral_rel_l2": 372.41357421875,
+  "high_band_spectral_rel_l2": 15313.390625,
+  "high_frequency_energy_ratio_error": 1.135701381826948e-06,
+  "gradient_rel_l2": 0.22304220497608185
+}

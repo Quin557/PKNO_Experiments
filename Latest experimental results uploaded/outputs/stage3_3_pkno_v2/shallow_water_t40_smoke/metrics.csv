@@ -1,0 +1,2 @@
+epoch,seconds,horizon,train_loss,train_pred_mse,val_full_rel_l2,test_full_rel_l2,lr,params
+0,20.271847,1,4.01801181e-01,1.03233073e-04,,9.14909527e-02,5.00000000e-05,745342
